@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 100" width="340" height="100">
+  <!-- Left Quadrant Emblem -->
+  <g transform="translate(10, 10)">
+    <!-- Top-Left Globe -->
+    <circle cx="22" cy="22" r="20" fill="none" stroke="#00485F" stroke-width="3" />
+    <ellipse cx="22" cy="22" rx="10" ry="20" fill="none" stroke="#00485F" stroke-width="2" />
+    <line x1="2" y1="22" x2="42" y2="22" stroke="#00485F" stroke-width="2" />
+    <line x1="6" y1="12" x2="38" y2="12" stroke="#00485F" stroke-width="1.5" />
+    <line x1="6" y1="32" x2="38" y2="32" stroke="#00485F" stroke-width="1.5" />
+
+    <!-- Top-Right Box (Dark Teal with white IP mark) -->
+    <rect x="46" y="2" width="38" height="38" fill="#00485F" rx="2" />
+    <path d="M54 10 L54 32 M54 10 C54 10 68 10 68 20 C68 28 54 28 54 28" stroke="#FFFFFF" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+    <line x1="72" y1="10" x2="72" y2="32" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" />
+
+    <!-- Bottom-Left Solid Dark Teal Box -->
+    <rect x="2" y="46" width="38" height="38" fill="#00485F" rx="2" />
+
+    <!-- Bottom-Right Grid Box -->
+    <rect x="46" y="46" width="38" height="38" fill="none" stroke="#00485F" stroke-width="3" rx="2" />
+    <path d="M46 65 Q65 46 84 65 Q65 84 46 65 Z" fill="none" stroke="#00485F" stroke-width="2" />
+    <line x1="65" y1="46" x2="65" y2="84" stroke="#00485F" stroke-width="2" />
+  </g>
+
+  <!-- Right Text Section -->
+  <g transform="translate(105, 20)">
+    <text x="0" y="20" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="900" fill="#00485F" letter-spacing="0.5">
+      INTELLECTUAL
+    </text>
+    <text x="0" y="42" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="900" fill="#00485F" letter-spacing="0.5">
+      PROPERTY <tspan fill="#003366">INDIA</tspan>
+    </text>
+    <text x="0" y="58" font-family="Arial, Helvetica, sans-serif" font-size="9" font-weight="700" fill="#333333" letter-spacing="-0.2">
+      PATENTS | DESIGNS | TRADE MARKS
+    </text>
+    <text x="0" y="69" font-family="Arial, Helvetica, sans-serif" font-size="9" font-weight="700" fill="#333333" letter-spacing="-0.2">
+      GEOGRAPHICAL INDICATIONS
+    </text>
+  </g>
+</svg>

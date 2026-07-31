@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 220" width="80" height="110">
+  <g fill="#2C3E50">
+    <!-- Central Lion Head & Ears -->
+    <path d="M72 16 C70 10 75 4 80 4 C85 4 90 10 88 16 C95 14 100 18 100 24 C100 30 94 36 88 38 C94 42 96 50 94 58 C92 64 86 68 80 70 C74 68 68 64 66 58 C64 50 66 42 72 38 C66 36 60 30 60 24 C60 18 65 14 72 16 Z" />
+    <!-- Muzzle, Nose & Whisker Pores -->
+    <ellipse cx="80" cy="46" rx="9" ry="7" fill="#2C3E50" />
+    <path d="M74 46 Q80 43 86 46 Q80 52 74 46 Z" fill="#FFFFFF" />
+    <circle cx="80" cy="45" r="2.5" fill="#2C3E50" />
+    <!-- Eyes -->
+    <circle cx="72" cy="30" r="2.5" fill="#FFFFFF" />
+    <circle cx="88" cy="30" r="2.5" fill="#FFFFFF" />
+
+    <!-- Left Lion Profile -->
+    <path d="M56 22 C48 18 40 24 40 32 C40 40 46 46 50 50 C44 54 42 62 46 70 C50 76 58 78 64 74 C60 66 60 56 64 48 C58 44 56 36 58 28 Z" />
+    <!-- Right Lion Profile -->
+    <path d="M104 22 C112 18 120 24 120 32 C120 40 114 46 110 50 C116 54 118 62 114 70 C110 76 102 78 96 74 C100 66 100 56 96 48 C102 44 104 36 102 28 Z" />
+
+    <!-- Main Mane Details -->
+    <path d="M64 74 C58 84 54 96 54 108 L106 108 C106 96 102 84 96 74 C90 82 70 82 64 74 Z" />
+    <path d="M60 85 C66 90 74 92 80 92 C86 92 94 90 100 85" stroke="#FFFFFF" stroke-width="2" fill="none" />
+    <path d="M64 97 C70 101 75 103 80 103 C85 103 90 101 96 97" stroke="#FFFFFF" stroke-width="2" fill="none" />
+
+    <!-- Abacus Base -->
+    <rect x="36" y="108" width="88" height="12" rx="2" fill="#2C3E50" />
+
+    <!-- Galloping Horse (Left) -->
+    <path d="M42 114 C44 112 47 112 49 114 C51 116 53 115 55 113 C57 115 56 118 53 118 C50 118 46 116 42 114 Z" fill="#FFFFFF" />
+
+    <!-- Central Ashoka Chakra Wheel -->
+    <circle cx="80" cy="114" r="5.5" fill="#FFFFFF" />
+    <circle cx="80" cy="114" r="4" fill="#2C3E50" />
+    <circle cx="80" cy="114" r="1" fill="#FFFFFF" />
+    <!-- Spokes -->
+    <line x1="80" y1="109" x2="80" y2="119" stroke="#FFFFFF" stroke-width="0.8" />
+    <line x1="75" y1="114" x2="85" y2="114" stroke="#FFFFFF" stroke-width="0.8" />
+    <line x1="76.5" y1="110.5" x2="83.5" y2="117.5" stroke="#FFFFFF" stroke-width="0.6" />
+    <line x1="76.5" y1="117.5" x2="83.5" y2="110.5" stroke="#FFFFFF" stroke-width="0.6" />
+
+    <!-- Bull (Right) -->
+    <path d="M106 114 C108 112 111 112 113 114 C115 116 117 115 118 113 C118 116 116 118 113 118 C110 118 107 116 106 114 Z" fill="#FFFFFF" />
+
+    <!-- Bell-shaped Lotus Base -->
+    <path d="M44 120 C44 120 52 138 80 138 C108 138 116 120 116 120 Z" fill="#2C3E50" />
+    <path d="M50 120 Q80 134 110 120" stroke="#FFFFFF" stroke-width="1.5" fill="none" />
+
+    <!-- Bottom Pedestal Bar -->
+    <rect x="30" y="142" width="100" height="6" rx="2" fill="#2C3E50" />
+
+    <!-- Satyameva Jayate (सत्यमेव जयते) in Hindi / Devanagari script -->
+    <text x="80" y="166" text-anchor="middle" font-size="16" font-weight="bold" fill="#2C3E50" font-family="'Noto Sans Devanagari', 'Mangal', 'Arial Unicode MS', serif" letter-spacing="0.5">
+      सत्यमेव जयते
+    </text>
+  </g>
+</svg>
