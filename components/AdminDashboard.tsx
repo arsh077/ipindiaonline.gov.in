@@ -145,9 +145,23 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
 
   const handleDeletePayment = (id: string) => {
     setDeletingRowId(id);
-    setTimeout(() => {
-      setPaymentsList(prev => prev.filter(p => p.id !== id).map((item, idx) => ({ ...item, sNo: idx + 1 })));
+    setTimeout(async () => {
+      const updated = paymentsList.filter(p => p.id !== id).map((item, idx) => ({ ...item, sNo: idx + 1 }));
+      setPaymentsList(updated);
       setDeletingRowId(null);
+      // Auto-save to backend
+      try {
+        const res = await fetch('/api/v1/admin/payments', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updated)
+        });
+        const data = await res.json();
+        if (data.success) {
+          showNotice("Row deleted & saved!");
+          onRefreshData();
+        }
+      } catch {}
     }, 600);
   };
 
@@ -209,9 +223,23 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
 
   const handleDeleteColumn = (id: string) => {
     setDeletingColId(id);
-    setTimeout(() => {
-      setColumnsList(prev => prev.filter(c => c.id !== id));
+    setTimeout(async () => {
+      const updated = columnsList.filter(c => c.id !== id);
+      setColumnsList(updated);
       setDeletingColId(null);
+      // Auto-save to backend
+      try {
+        const res = await fetch('/api/v1/admin/columns', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updated)
+        });
+        const data = await res.json();
+        if (data.success) {
+          showNotice("Column deleted & saved!");
+          onRefreshData();
+        }
+      } catch {}
     }, 600);
   };
 
