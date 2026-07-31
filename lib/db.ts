@@ -120,34 +120,67 @@ the user on account of:
   }
 };
 
+declare global {
+  var __PORTAL_DB__: FullPortalData | undefined;
+}
+
+const TMP_DB_FILE = path.join('/tmp', 'db.json');
+
 export function getDbData(): FullPortalData {
-  try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-    if (!fs.existsSync(DB_FILE)) {
-      fs.writeFileSync(DB_FILE, JSON.stringify(INITIAL_DATA, null, 2), 'utf-8');
-      return INITIAL_DATA;
-    }
-    const raw = fs.readFileSync(DB_FILE, 'utf-8');
-    const parsed = JSON.parse(raw) as FullPortalData;
-    if (!parsed.tableColumns || !Array.isArray(parsed.tableColumns) || parsed.tableColumns.length === 0) {
-      parsed.tableColumns = DEFAULT_TABLE_COLUMNS;
-    }
-    return parsed;
-  } catch (error) {
-    console.error('Error reading DB file:', error);
-    return INITIAL_DATA;
+  if (globalThis.__PORTAL_DB__) {
+    return globalThis.__PORTAL_DB__;
   }
+
+  try {
+    // 1. Try reading from /tmp/db.json first (serverless writable disk)
+    if (fs.existsSync(TMP_DB_FILE)) {
+      const raw = fs.readFileSync(TMP_DB_FILE, 'utf-8');
+      const parsed = JSON.parse(raw) as FullPortalData;
+      if (parsed && Array.isArray(parsed.payments)) {
+        if (!parsed.tableColumns || !Array.isArray(parsed.tableColumns) || parsed.tableColumns.length === 0) {
+          parsed.tableColumns = DEFAULT_TABLE_COLUMNS;
+        }
+        globalThis.__PORTAL_DB__ = parsed;
+        return parsed;
+      }
+    }
+
+    // 2. Try reading from project data/db.json
+    if (fs.existsSync(DB_FILE)) {
+      const raw = fs.readFileSync(DB_FILE, 'utf-8');
+      const parsed = JSON.parse(raw) as FullPortalData;
+      if (!parsed.tableColumns || !Array.isArray(parsed.tableColumns) || parsed.tableColumns.length === 0) {
+        parsed.tableColumns = DEFAULT_TABLE_COLUMNS;
+      }
+      globalThis.__PORTAL_DB__ = parsed;
+      return parsed;
+    }
+  } catch (error) {
+    console.error('Error reading DB data:', error);
+  }
+
+  globalThis.__PORTAL_DB__ = INITIAL_DATA;
+  return INITIAL_DATA;
 }
 
 export function saveDbData(data: FullPortalData): void {
+  // Always update in-memory cache instantly so GET /api/v1/public-data immediately returns updated data
+  globalThis.__PORTAL_DB__ = data;
+
+  // 1. Write to /tmp/db.json (always writable in Vercel Serverless Functions)
+  try {
+    fs.writeFileSync(TMP_DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('Error writing to /tmp/db.json:', err);
+  }
+
+  // 2. Write to project data/db.json (writable in local development)
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
     fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
-  } catch (error) {
-    console.error('Error saving DB file:', error);
+  } catch (err) {
+    // Ignore EROFS error on Vercel production serverless filesystem
   }
 }

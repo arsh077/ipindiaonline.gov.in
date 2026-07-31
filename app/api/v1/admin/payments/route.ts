@@ -3,6 +3,9 @@ import { getAdminAuth } from '@/lib/auth';
 import { getDbData, saveDbData } from '@/lib/db';
 import { PaymentItem } from '@/lib/types';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(req: NextRequest) {
   const db = getDbData();
   return NextResponse.json({

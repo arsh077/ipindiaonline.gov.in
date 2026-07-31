@@ -3,6 +3,9 @@ import { getAdminAuth } from '@/lib/auth';
 import { getDbData, saveDbData } from '@/lib/db';
 import { TermSection } from '@/lib/types';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function PUT(req: NextRequest) {
   const auth = getAdminAuth(req);
   if (!auth) {

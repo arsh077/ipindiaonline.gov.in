@@ -3,6 +3,9 @@ import { getAdminAuth } from '@/lib/auth';
 import { getDbData, saveDbData, DEFAULT_TABLE_COLUMNS } from '@/lib/db';
 import { TableColumn } from '@/lib/types';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET() {
   const db = getDbData();
   return NextResponse.json({

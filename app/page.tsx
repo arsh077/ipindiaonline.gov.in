@@ -27,7 +27,7 @@ export default function Home() {
       }
 
       // Fetch public portal data
-      const res = await fetch('/api/v1/public-data');
+      const res = await fetch('/api/v1/public-data', { cache: 'no-store' });
       const json = await res.json();
       if (json.success) {
         setData({
@@ -50,7 +50,7 @@ export default function Home() {
     let isMounted = true;
     const fetchData = async () => {
       try {
-        const verifyRes = await fetch('/api/v1/admin/verify');
+        const verifyRes = await fetch('/api/v1/admin/verify', { cache: 'no-store' });
         if (verifyRes.ok && isMounted) {
           const verifyJson = await verifyRes.json();
           if (verifyJson.success) {
@@ -58,7 +58,7 @@ export default function Home() {
           }
         }
 
-        const res = await fetch('/api/v1/public-data');
+        const res = await fetch('/api/v1/public-data', { cache: 'no-store' });
         const json = await res.json();
         if (json.success && isMounted) {
           setData({
