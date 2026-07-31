@@ -107,16 +107,7 @@ export default function Home() {
   };
 
   if (loading || !data) {
-    return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
-        <div className="flex items-center gap-3 bg-white px-6 py-4 rounded-xl shadow-lg border border-gray-200">
-          <RefreshCw className="w-5 h-5 text-[#006078] animate-spin" />
-          <span className="font-semibold text-gray-700 text-sm font-sans">
-            Loading Government Payment Portal Replica...
-          </span>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   // Render Admin Dashboard View
