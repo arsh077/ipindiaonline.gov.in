@@ -182,15 +182,17 @@ export default function Header({ portalSettings, redirectURL }: HeaderProps) {
         >
           {/* Left Side: Authentic Ashoka Lion Emblem + Official Department Title */}
           <div className="flex items-center gap-3">
-            {portalSettings.emblemImage ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={portalSettings.emblemImage}
-                alt="State Emblem of India"
-                className="h-[85px] w-auto object-contain shrink-0"
-              />
-            ) : (
-              <AshokaEmblemSVG />
+            {portalSettings.emblemImage === 'none' ? null : (
+              portalSettings.emblemImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={portalSettings.emblemImage}
+                  alt="State Emblem of India"
+                  className="h-[85px] w-auto object-contain shrink-0"
+                />
+              ) : (
+                <AshokaEmblemSVG />
+              )
             )}
 
             <div style={{ fontFamily: 'Arial, sans-serif', color: '#333333' }}>
@@ -214,15 +216,17 @@ export default function Header({ portalSettings, redirectURL }: HeaderProps) {
 
           {/* Right Side: IP India Official Logo */}
           <div className="flex items-center shrink-0">
-            {portalSettings.logo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={portalSettings.logo}
-                alt="Intellectual Property India Logo"
-                className="h-20 max-w-[280px] object-contain"
-              />
-            ) : (
-              <IpIndiaLogoSVG />
+            {portalSettings.logo === 'none' ? null : (
+              portalSettings.logo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={portalSettings.logo}
+                  alt="Intellectual Property India Logo"
+                  className="h-20 max-w-[280px] object-contain"
+                />
+              ) : (
+                <IpIndiaLogoSVG />
+              )
             )}
           </div>
         </div>

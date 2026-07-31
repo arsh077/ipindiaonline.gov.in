@@ -787,8 +787,12 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
                   </label>
                   <div className="flex items-center gap-4">
                     <div className="w-20 h-20 bg-slate-950 border border-slate-800 rounded-lg flex items-center justify-center p-1 overflow-hidden shrink-0">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={headerForm.emblemImage || '/images/ashoka-emblem.svg'} alt="Preview Emblem" className="max-w-full max-h-full object-contain" />
+                      {headerForm.emblemImage === 'none' ? (
+                        <span className="text-[10px] text-red-400 font-semibold italic text-center">No Emblem (Deleted)</span>
+                      ) : (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={headerForm.emblemImage || '/images/ashoka-emblem.svg'} alt="Preview Emblem" className="max-w-full max-h-full object-contain" />
+                      )}
                     </div>
                     <div className="flex-1 space-y-2">
                       <label className="flex items-center justify-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium cursor-pointer transition-colors border border-slate-700">
@@ -796,15 +800,25 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
                         Upload Emblem Image
                         <input type="file" accept="image/*" onChange={handleEmblemUpload} className="hidden" />
                       </label>
-                      {headerForm.emblemImage && (
+                      <div className="flex items-center gap-3">
                         <button
                           type="button"
-                          onClick={() => setHeaderForm(prev => ({ ...prev, emblemImage: '' }))}
-                          className="text-[11px] text-red-400 hover:underline block"
+                          onClick={() => setHeaderForm(prev => ({ ...prev, emblemImage: 'none' }))}
+                          className="flex items-center gap-1 text-[11px] text-red-400 hover:text-red-300 font-medium hover:underline"
                         >
-                          Reset to default emblem
+                          <Trash2 className="w-3 h-3" />
+                          Delete Emblem
                         </button>
-                      )}
+                        {headerForm.emblemImage !== '' && (
+                          <button
+                            type="button"
+                            onClick={() => setHeaderForm(prev => ({ ...prev, emblemImage: '' }))}
+                            className="text-[11px] text-slate-400 hover:text-slate-200 hover:underline"
+                          >
+                            Reset to default
+                          </button>
+                        )}
+                      </div>
                       <p className="text-[11px] text-slate-400">Supported formats: PNG, JPG, SVG (&lt; 3MB)</p>
                     </div>
                   </div>
@@ -817,8 +831,12 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
                   </label>
                   <div className="flex items-center gap-4">
                     <div className="w-20 h-20 bg-slate-950 border border-slate-800 rounded-lg flex items-center justify-center p-1 overflow-hidden shrink-0">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={headerForm.logo && !headerForm.logo.includes('svg+xml') ? headerForm.logo : '/images/ip-india-logo.svg'} alt="Preview Logo" className="max-w-full max-h-full object-contain" />
+                      {headerForm.logo === 'none' ? (
+                        <span className="text-[10px] text-red-400 font-semibold italic text-center">No Logo (Deleted)</span>
+                      ) : (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={headerForm.logo && !headerForm.logo.includes('svg+xml') ? headerForm.logo : '/images/ip-india-logo.svg'} alt="Preview Logo" className="max-w-full max-h-full object-contain" />
+                      )}
                     </div>
                     <div className="flex-1 space-y-2">
                       <label className="flex items-center justify-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium cursor-pointer transition-colors border border-slate-700">
@@ -826,15 +844,25 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
                         Upload Logo Image
                         <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
                       </label>
-                      {headerForm.logo && (
+                      <div className="flex items-center gap-3">
                         <button
                           type="button"
-                          onClick={() => setHeaderForm(prev => ({ ...prev, logo: '' }))}
-                          className="text-[11px] text-red-400 hover:underline block"
+                          onClick={() => setHeaderForm(prev => ({ ...prev, logo: 'none' }))}
+                          className="flex items-center gap-1 text-[11px] text-red-400 hover:text-red-300 font-medium hover:underline"
                         >
-                          Reset to default logo
+                          <Trash2 className="w-3 h-3" />
+                          Delete Logo
                         </button>
-                      )}
+                        {headerForm.logo !== '' && (
+                          <button
+                            type="button"
+                            onClick={() => setHeaderForm(prev => ({ ...prev, logo: '' }))}
+                            className="text-[11px] text-slate-400 hover:text-slate-200 hover:underline"
+                          >
+                            Reset to default
+                          </button>
+                        )}
+                      </div>
                       <p className="text-[11px] text-slate-400">Supported formats: PNG, JPG, SVG (&lt; 2MB)</p>
                     </div>
                   </div>
