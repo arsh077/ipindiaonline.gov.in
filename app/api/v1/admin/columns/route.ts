@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDbData, saveDbData, DEFAULT_TABLE_COLUMNS } from '@/lib/db';
+import { getDbDataAsync, saveDbData, DEFAULT_TABLE_COLUMNS } from '@/lib/db';
 import { fail, ok, readJson, requireAdmin, serverError } from '@/lib/api';
 import { columns } from '@/lib/validation';
 
@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function GET() {
-  const db = getDbData();
+  const db = await getDbDataAsync();
   return ok(db.tableColumns || DEFAULT_TABLE_COLUMNS);
 }
 
@@ -17,7 +17,7 @@ export async function PUT(req: NextRequest) {
   try {
     const parsed = await readJson(req); if (parsed.response) return parsed.response;
 
-    const db = getDbData();
+    const db = await getDbDataAsync();
     db.tableColumns = columns(parsed.data);
     saveDbData(db);
 

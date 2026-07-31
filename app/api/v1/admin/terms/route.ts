@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDbData, saveDbData } from '@/lib/db';
+import { getDbDataAsync, saveDbData } from '@/lib/db';
 import { fail, ok, readJson, requireAdmin, serverError } from '@/lib/api';
 import { terms } from '@/lib/validation';
 
@@ -11,7 +11,7 @@ export async function PUT(req: NextRequest) {
 
   try {
     const parsed = await readJson(req); if (parsed.response) return parsed.response;
-    const db = getDbData();
+    const db = await getDbDataAsync();
     db.terms = terms(parsed.data);
     saveDbData(db);
 

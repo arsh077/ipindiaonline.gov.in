@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDbData, saveDbData } from '@/lib/db';
+import { getDbDataAsync, saveDbData } from '@/lib/db';
 import { fail, ok, requireAdmin } from '@/lib/api';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function DELETE(
   req: NextRequest,
@@ -10,7 +13,7 @@ export async function DELETE(
 
   const { id } = await params;
   if (!id || id.length > 100) return fail('Invalid payment id');
-  const db = getDbData();
+  const db = await getDbDataAsync();
   if (!db.payments.some(p => p.id === id)) return fail('Payment not found', 404);
   db.payments = db.payments.filter(p => p.id !== id);
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDbData, saveDbData } from '@/lib/db';
+import { getDbDataAsync, saveDbData } from '@/lib/db';
 import { PaymentItem } from '@/lib/types';
 import { fail, ok, readJson, requireAdmin, serverError } from '@/lib/api';
 import { isRecord, payment, payments } from '@/lib/validation';
@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function GET(req: NextRequest) {
-  const db = getDbData();
+  const db = await getDbDataAsync();
   return ok(db.payments);
 }
 
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     const parsed = await readJson(req); if (parsed.response) return parsed.response;
     if (!isRecord(parsed.data)) return fail('Request body must be an object');
 
-    const db = getDbData();
+    const db = await getDbDataAsync();
     const newRow: PaymentItem = payment(parsed.data, crypto.randomUUID(), db.payments.length + 1);
 
     db.payments.push(newRow);
@@ -42,7 +42,7 @@ export async function PUT(req: NextRequest) {
   try {
     const parsed = await readJson(req); if (parsed.response) return parsed.response;
     const body = parsed.data;
-    const db = getDbData();
+    const db = await getDbDataAsync();
 
     if (Array.isArray(body)) {
       // replace whole array

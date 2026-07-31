@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { getDbData, saveDbData } from '@/lib/db';
+import { getDbDataAsync, saveDbData } from '@/lib/db';
 import { fail, ok, readJson, requireAdmin, serverError } from '@/lib/api';
 import { isRecord, text } from '@/lib/validation';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function PUT(req: NextRequest) {
   const access = requireAdmin(req); if (access.response) return access.response;
@@ -12,7 +15,7 @@ export async function PUT(req: NextRequest) {
     if (!isRecord(parsed.data)) return fail('Request body must be an object');
     const { newUsername, newPassword } = parsed.data;
 
-    const db = getDbData();
+    const db = await getDbDataAsync();
     if (newUsername !== undefined) {
       const username = text(newUsername, 'Username', 64, true)!;
       if (!/^[a-zA-Z0-9_.-]+$/.test(username)) return fail('Username may contain only letters, numbers, dots, underscores, and hyphens');
