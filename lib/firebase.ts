@@ -77,11 +77,26 @@ export async function fetchFirebaseData(): Promise<FullPortalData | null> {
   return Promise.race([fetchPromise, timeout]);
 }
 
+function sanitizeForFirestore(data: FullPortalData): any {
+  const copy = JSON.parse(JSON.stringify(data));
+  if (copy.portalSettings) {
+    if (typeof copy.portalSettings.logo === 'string' && copy.portalSettings.logo.length > 50000) {
+      copy.portalSettings.logo = '/images/ip-india-logo.svg';
+    }
+    if (typeof copy.portalSettings.emblemImage === 'string' && copy.portalSettings.emblemImage.length > 50000) {
+      copy.portalSettings.emblemImage = '/images/ashoka-emblem.svg';
+    }
+  }
+  return copy;
+}
+
 export async function saveFirebaseData(data: FullPortalData): Promise<boolean> {
+  const cleanData = sanitizeForFirestore(data);
+
   // 1. Try Firebase Admin SDK first
   if (adminDb) {
     try {
-      await adminDb.collection(COLLECTION_NAME).doc(DOC_NAME).set(data, { merge: true });
+      await adminDb.collection(COLLECTION_NAME).doc(DOC_NAME).set(cleanData, { merge: true });
       return true;
     } catch (error) {
       console.error('Admin SDK save error:', error);
@@ -91,7 +106,7 @@ export async function saveFirebaseData(data: FullPortalData): Promise<boolean> {
   // 2. Fallback to Client SDK
   try {
     const docRef = doc(clientDb, COLLECTION_NAME, DOC_NAME);
-    await setDoc(docRef, data, { merge: true });
+    await setDoc(docRef, cleanData, { merge: true });
     return true;
   } catch (error) {
     console.error('Client SDK save error:', error);
