@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     const token = signToken(username);
 
     attempts.delete(client);
-    const res = ok({ username: db.admin.username }, 'Admin authentication successful');
+    const res = ok({ username: db.admin.username, token }, 'Admin authentication successful');
 
     res.cookies.set('admin_token', token, {
       httpOnly: true,

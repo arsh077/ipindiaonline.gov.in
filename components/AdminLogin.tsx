@@ -27,8 +27,8 @@ export default function AdminLogin({ onSuccess, onCancel }: AdminLoginProps) {
       });
 
       const data = await res.json();
-      if (data.success && data.data?.token) {
-        onSuccess(data.data.token);
+      if (data.success) {
+        onSuccess(data.data?.token || 'logged_in');
       } else {
         setError(data.message || 'Invalid admin credentials');
       }
