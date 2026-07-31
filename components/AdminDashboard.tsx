@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { FullPortalData, PaymentItem, TermSection, PortalSettings, TableColumn } from '@/lib/types';
 import { 
   Building2, CreditCard, FileText, Globe, Key, 
@@ -42,6 +42,8 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
   // Credentials
   const [newUsername, setNewUsername] = useState<string>('');
   const [newPassword, setNewPassword] = useState<string>('');
+  const [deletingRowId, setDeletingRowId] = useState<string | null>(null);
+  const [deletingColId, setDeletingColId] = useState<string | null>(null);
 
   const showNotice = (text: string, type: 'success' | 'error' = 'success') => {
     setMessage({ text, type });
@@ -142,7 +144,11 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
   };
 
   const handleDeletePayment = (id: string) => {
-    setPaymentsList(prev => prev.filter(p => p.id !== id).map((item, idx) => ({ ...item, sNo: idx + 1 })));
+    setDeletingRowId(id);
+    setTimeout(() => {
+      setPaymentsList(prev => prev.filter(p => p.id !== id).map((item, idx) => ({ ...item, sNo: idx + 1 })));
+      setDeletingRowId(null);
+    }, 600);
   };
 
   const handleSavePayments = async () => {
@@ -202,7 +208,11 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
   };
 
   const handleDeleteColumn = (id: string) => {
-    setColumnsList(prev => prev.filter(c => c.id !== id));
+    setDeletingColId(id);
+    setTimeout(() => {
+      setColumnsList(prev => prev.filter(c => c.id !== id));
+      setDeletingColId(null);
+    }, 600);
   };
 
   const handleSaveColumns = async () => {
@@ -511,7 +521,18 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
                   </thead>
                   <tbody className="divide-y divide-slate-800">
                     {paymentsList.map((row, index) => (
-                      <tr key={row.id || index} className="hover:bg-slate-900/50">
+                      <tr 
+                        key={row.id || index} 
+                        className={`transition-all duration-500 ease-in-out ${
+                          deletingRowId === row.id 
+                            ? 'bg-red-900/60 opacity-0 scale-y-0 translate-x-[100%] h-0 overflow-hidden' 
+                            : 'hover:bg-slate-900/50 opacity-100 scale-y-100 translate-x-0'
+                        }`}
+                        style={{
+                          transformOrigin: 'top center',
+                          ...(deletingRowId === row.id ? { maxHeight: '0px', padding: 0 } : {})
+                        }}
+                      >
                         <td className="p-2 text-center font-mono text-slate-400">{index + 1}</td>
                         <td className="p-2">
                           <input
@@ -642,7 +663,18 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
                   </thead>
                   <tbody className="divide-y divide-slate-800">
                     {columnsList.map((col, index) => (
-                      <tr key={col.id || index} className="hover:bg-slate-900/50">
+                      <tr 
+                        key={col.id || index} 
+                        className={`transition-all duration-500 ease-in-out ${
+                          deletingColId === col.id 
+                            ? 'bg-red-900/60 opacity-0 scale-y-0 translate-x-[100%] h-0 overflow-hidden' 
+                            : 'hover:bg-slate-900/50 opacity-100 scale-y-100 translate-x-0'
+                        }`}
+                        style={{
+                          transformOrigin: 'top center',
+                          ...(deletingColId === col.id ? { maxHeight: '0px', padding: 0 } : {})
+                        }}
+                      >
                         <td className="p-3 text-center font-mono text-slate-400">{index + 1}</td>
                         <td className="p-3">
                           <input
