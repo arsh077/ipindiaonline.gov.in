@@ -4,12 +4,13 @@ import React, { useEffect, useState, useCallback } from 'react';
 import PublicPage from '@/components/PublicPage';
 import AdminDashboard from '@/components/AdminDashboard';
 import AdminLogin from '@/components/AdminLogin';
+import { INITIAL_DATA } from '@/lib/initial-data';
 import { FullPortalData } from '@/lib/types';
 import { RefreshCw } from 'lucide-react';
 
 export default function Home() {
-  const [data, setData] = useState<FullPortalData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<FullPortalData>(INITIAL_DATA);
+  const [loading, setLoading] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [viewMode, setViewMode] = useState<'public' | 'admin'>('public');
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
@@ -105,10 +106,6 @@ export default function Home() {
     setIsAdminLoggedIn(false);
     setViewMode('public');
   };
-
-  if (loading || !data) {
-    return null;
-  }
 
   // Render Admin Dashboard View
   if (viewMode === 'admin' && isAdminLoggedIn) {

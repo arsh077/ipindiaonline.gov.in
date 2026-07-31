@@ -45,30 +45,36 @@ const COLLECTION_NAME = 'cms_portal';
 const DOC_NAME = 'portal_data';
 
 export async function fetchFirebaseData(): Promise<FullPortalData | null> {
-  // 1. Try Firebase Admin SDK first (bypasses security rules cleanly)
-  if (adminDb) {
+  const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500));
+
+  const fetchPromise = (async () => {
+    // 1. Try Firebase Admin SDK first (bypasses security rules cleanly)
+    if (adminDb) {
+      try {
+        const docSnap = await adminDb.collection(COLLECTION_NAME).doc(DOC_NAME).get();
+        if (docSnap.exists) {
+          return docSnap.data() as FullPortalData;
+        }
+      } catch (error) {
+        console.error('Admin SDK fetch error:', error);
+      }
+    }
+
+    // 2. Fallback to Client SDK
     try {
-      const docSnap = await adminDb.collection(COLLECTION_NAME).doc(DOC_NAME).get();
-      if (docSnap.exists) {
+      const docRef = doc(clientDb, COLLECTION_NAME, DOC_NAME);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
         return docSnap.data() as FullPortalData;
       }
     } catch (error) {
-      console.error('Admin SDK fetch error:', error);
+      console.error('Client SDK fetch error:', error);
     }
-  }
 
-  // 2. Fallback to Client SDK
-  try {
-    const docRef = doc(clientDb, COLLECTION_NAME, DOC_NAME);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      return docSnap.data() as FullPortalData;
-    }
-  } catch (error) {
-    console.error('Client SDK fetch error:', error);
-  }
+    return null;
+  })();
 
-  return null;
+  return Promise.race([fetchPromise, timeout]);
 }
 
 export async function saveFirebaseData(data: FullPortalData): Promise<boolean> {
