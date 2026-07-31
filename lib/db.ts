@@ -120,11 +120,25 @@ the user on account of:
   }
 };
 
+import { fetchFirebaseData, saveFirebaseData } from './firebase';
+
 declare global {
   var __PORTAL_DB__: FullPortalData | undefined;
 }
 
 const TMP_DB_FILE = path.join('/tmp', 'db.json');
+
+export async function getDbDataAsync(): Promise<FullPortalData> {
+  const firebaseData = await fetchFirebaseData();
+  if (firebaseData && Array.isArray(firebaseData.payments)) {
+    if (!firebaseData.tableColumns || !Array.isArray(firebaseData.tableColumns) || firebaseData.tableColumns.length === 0) {
+      firebaseData.tableColumns = DEFAULT_TABLE_COLUMNS;
+    }
+    globalThis.__PORTAL_DB__ = firebaseData;
+    return firebaseData;
+  }
+  return getDbData();
+}
 
 export function getDbData(): FullPortalData {
   if (globalThis.__PORTAL_DB__) {
@@ -167,14 +181,17 @@ export function saveDbData(data: FullPortalData): void {
   // Always update in-memory cache instantly so GET /api/v1/public-data immediately returns updated data
   globalThis.__PORTAL_DB__ = data;
 
-  // 1. Write to /tmp/db.json (always writable in Vercel Serverless Functions)
+  // 1. Save to Firebase Firestore asynchronously
+  saveFirebaseData(data).catch(err => console.error('Firebase save error:', err));
+
+  // 2. Write to /tmp/db.json (always writable in Vercel Serverless Functions)
   try {
     fs.writeFileSync(TMP_DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
   } catch (err) {
     console.error('Error writing to /tmp/db.json:', err);
   }
 
-  // 2. Write to project data/db.json (writable in local development)
+  // 3. Write to project data/db.json (writable in local development)
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });

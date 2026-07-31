@@ -1,18 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAdminAuth } from '@/lib/auth';
 import { getDbData, saveDbData } from '@/lib/db';
+import { fail, ok, requireAdmin } from '@/lib/api';
 
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = getAdminAuth(req);
-  if (!auth) {
-    return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
-  }
+  const access = requireAdmin(req); if (access.response) return access.response;
 
   const { id } = await params;
+  if (!id || id.length > 100) return fail('Invalid payment id');
   const db = getDbData();
+  if (!db.payments.some(p => p.id === id)) return fail('Payment not found', 404);
   db.payments = db.payments.filter(p => p.id !== id);
 
   // Re-index sNo
@@ -22,9 +21,5 @@ export async function DELETE(
 
   saveDbData(db);
 
-  return NextResponse.json({
-    success: true,
-    message: "Payment deleted successfully",
-    data: db.payments
-  });
+  return ok(db.payments, 'Payment deleted successfully');
 }

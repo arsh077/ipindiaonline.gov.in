@@ -1,34 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAdminAuth } from '@/lib/auth';
 import { getDbData, saveDbData } from '@/lib/db';
+import { fail, ok, readJson, requireAdmin, serverError } from '@/lib/api';
+import { isRecord, url } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function PUT(req: NextRequest) {
-  const auth = getAdminAuth(req);
-  if (!auth) {
-    return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
-  }
+  const access = requireAdmin(req); if (access.response) return access.response;
 
   try {
-    const body = await req.json();
-    const { redirectURL } = body;
-
-    if (!redirectURL) {
-      return NextResponse.json({ success: false, message: "redirectURL is required" }, { status: 400 });
-    }
+    const parsed = await readJson(req); if (parsed.response) return parsed.response;
+    if (!isRecord(parsed.data)) return fail('Request body must be an object');
 
     const db = getDbData();
-    db.settings.redirectURL = redirectURL;
+    db.settings.redirectURL = url(parsed.data.redirectURL, 'redirectURL');
     saveDbData(db);
 
-    return NextResponse.json({
-      success: true,
-      message: "Redirect URL updated successfully",
-      data: db.settings
-    });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+    return ok(db.settings, 'Redirect URL updated successfully');
+  } catch (err) {
+    return err instanceof Error ? fail(err.message) : serverError(err);
   }
 }

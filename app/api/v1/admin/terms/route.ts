@@ -1,37 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAdminAuth } from '@/lib/auth';
 import { getDbData, saveDbData } from '@/lib/db';
-import { TermSection } from '@/lib/types';
+import { fail, ok, readJson, requireAdmin, serverError } from '@/lib/api';
+import { terms } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function PUT(req: NextRequest) {
-  const auth = getAdminAuth(req);
-  if (!auth) {
-    return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
-  }
+  const access = requireAdmin(req); if (access.response) return access.response;
 
   try {
-    const body = await req.json();
+    const parsed = await readJson(req); if (parsed.response) return parsed.response;
     const db = getDbData();
+    db.terms = terms(parsed.data);
+    saveDbData(db);
 
-    if (Array.isArray(body)) {
-      db.terms = body.map((item, idx) => ({
-        id: item.id || `term-${idx + 1}`,
-        order: idx + 1,
-        title: item.title,
-        description: item.description
-      }));
-      saveDbData(db);
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: "Terms updated successfully",
-      data: db.terms
-    });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+    return ok(db.terms, 'Terms updated successfully');
+  } catch (err) {
+    return err instanceof Error ? fail(err.message) : serverError(err);
   }
 }

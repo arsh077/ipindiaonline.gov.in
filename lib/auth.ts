@@ -1,7 +1,8 @@
 import jwt from 'jsonwebtoken';
 import { NextRequest } from 'next/server';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'trademarkapply_gov_portal_cms_secret_2026';
+const fallbackSecret = 'trademarkapply_gov_portal_cms_secret_2026';
+const JWT_SECRET = process.env.JWT_SECRET || fallbackSecret;
 
 export interface TokenPayload {
   username: string;
@@ -9,12 +10,19 @@ export interface TokenPayload {
 }
 
 export function signToken(username: string): string {
-  return jwt.sign({ username, role: 'admin' }, JWT_SECRET, { expiresIn: '24h' });
+  return jwt.sign({ username, role: 'admin' }, JWT_SECRET, {
+    expiresIn: '8h',
+    issuer: 'trademarkapply-cms',
+    audience: 'admin',
+  });
 }
 
 export function verifyToken(token: string): TokenPayload | null {
   try {
-    return jwt.verify(token, JWT_SECRET) as TokenPayload;
+    return jwt.verify(token, JWT_SECRET, {
+      issuer: 'trademarkapply-cms',
+      audience: 'admin',
+    }) as TokenPayload;
   } catch (err) {
     return null;
   }

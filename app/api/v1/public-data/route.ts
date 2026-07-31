@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getDbData } from '@/lib/db';
+import { getDbDataAsync } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function GET() {
-  const db = getDbData();
+  const db = await getDbDataAsync();
   return NextResponse.json({
     success: true,
     message: "Portal data fetched successfully",

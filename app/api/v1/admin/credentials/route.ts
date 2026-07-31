@@ -1,34 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { getAdminAuth } from '@/lib/auth';
 import { getDbData, saveDbData } from '@/lib/db';
+import { fail, ok, readJson, requireAdmin, serverError } from '@/lib/api';
+import { isRecord, text } from '@/lib/validation';
 
 export async function PUT(req: NextRequest) {
-  const auth = getAdminAuth(req);
-  if (!auth) {
-    return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
-  }
+  const access = requireAdmin(req); if (access.response) return access.response;
 
   try {
-    const body = await req.json();
-    const { newUsername, newPassword } = body;
+    const parsed = await readJson(req); if (parsed.response) return parsed.response;
+    if (!isRecord(parsed.data)) return fail('Request body must be an object');
+    const { newUsername, newPassword } = parsed.data;
 
     const db = getDbData();
-    if (newUsername && newUsername.trim()) {
-      db.admin.username = newUsername.trim();
+    if (newUsername !== undefined) {
+      const username = text(newUsername, 'Username', 64, true)!;
+      if (!/^[a-zA-Z0-9_.-]+$/.test(username)) return fail('Username may contain only letters, numbers, dots, underscores, and hyphens');
+      db.admin.username = username;
     }
-    if (newPassword && newPassword.trim()) {
-      db.admin.passwordHash = await bcrypt.hash(newPassword.trim(), 10);
+    if (newPassword !== undefined) {
+      const password = text(newPassword, 'Password', 128, true)!;
+      if (password.length < 12) return fail('Password must be at least 12 characters');
+      db.admin.passwordHash = await bcrypt.hash(password, 12);
     }
+    if (newUsername === undefined && newPassword === undefined) return fail('Provide a username or password');
 
     saveDbData(db);
 
-    return NextResponse.json({
-      success: true,
-      message: "Admin credentials updated successfully",
-      data: { username: db.admin.username }
-    });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, message: err.message }, { status: 500 });
+    return ok({ username: db.admin.username }, 'Admin credentials updated successfully');
+  } catch (err) {
+    return err instanceof Error ? fail(err.message) : serverError(err);
   }
 }
