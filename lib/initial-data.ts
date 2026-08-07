@@ -13,7 +13,7 @@ export const DEFAULT_TABLE_COLUMNS: TableColumn[] = [
 export const INITIAL_DATA: FullPortalData = {
   portalSettings: {
     headerBanner: "/uploads/logo11.png",
-    logo: "/images/ip-india-logo.svg",
+    logo: "/uploads/logo11.png",
     emblemImage: "/images/ashoka-emblem.svg",
     organizationName: "Office of the Controller General of Patents, Designs & Trade Marks",
     departmentName: "Department of Industrial Policy & Promotion,",
