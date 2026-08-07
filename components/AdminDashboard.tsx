@@ -8,9 +8,6 @@ import {
   Share2, Copy, ExternalLink, Check, Link as LinkIcon
 } from 'lucide-react';
 
-import { doc, setDoc } from 'firebase/firestore';
-import { clientDb } from '@/lib/firebase-client';
-
 const DEFAULT_COLS: TableColumn[] = [
   { id: 'col-sno', key: 'sNo', label: 'S. No.', visible: true },
   { id: 'col-formNumber', key: 'formNumber', label: 'Form Number', visible: true },
@@ -147,9 +144,6 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
         } catch (e) {}
       }
     }
-    try {
-      setDoc(doc(clientDb, 'cms_portal', 'portal_data'), fullData).catch(() => {});
-    } catch (e) {}
   };
   
   // Credentials

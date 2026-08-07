@@ -1,76 +1,39 @@
 import fs from 'fs';
 import path from 'path';
-import bcrypt from 'bcryptjs';
-import { FullPortalData, PaymentItem, PortalSettings, TermSection, PortalConfig, TableColumn } from './types';
+import { FullPortalData } from './types';
+import { INITIAL_DATA, DEFAULT_TABLE_COLUMNS } from './initial-data';
+
+export { INITIAL_DATA, DEFAULT_TABLE_COLUMNS };
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
-
-import { INITIAL_DATA, DEFAULT_TABLE_COLUMNS } from './initial-data';
-export { INITIAL_DATA, DEFAULT_TABLE_COLUMNS };
-
-import { fetchFirebaseData, saveFirebaseData } from './firebase';
+const TMP_DB_FILE = path.join('/tmp', 'db.json');
 
 declare global {
   var __PORTAL_DB__: FullPortalData | undefined;
 }
 
-const TMP_DB_FILE = path.join('/tmp', 'db.json');
-
-export async function getDbDataAsync(): Promise<FullPortalData> {
-  try {
-    const firebaseData = await fetchFirebaseData();
-    if (firebaseData && Array.isArray(firebaseData.payments)) {
-      if (!firebaseData.tableColumns || !Array.isArray(firebaseData.tableColumns) || firebaseData.tableColumns.length === 0) {
-        firebaseData.tableColumns = DEFAULT_TABLE_COLUMNS;
-      }
-      if (!firebaseData.portalSettings) {
-        firebaseData.portalSettings = { ...INITIAL_DATA.portalSettings };
-      }
-      firebaseData.portalSettings.attorneyName = firebaseData.portalSettings.attorneyName || "FARHEEN MUSHIR";
-      firebaseData.portalSettings.attorneyNumber = firebaseData.portalSettings.attorneyNumber || "50565";
-
-      globalThis.__PORTAL_DB__ = firebaseData;
-      return firebaseData;
-    }
-  } catch (err) {
-    console.error('Error fetching Firebase data in getDbDataAsync:', err);
+export function getDbData(): FullPortalData {
+  if (globalThis.__PORTAL_DB__) {
+    return globalThis.__PORTAL_DB__;
   }
 
-  return getDbData();
-}
-
-export function getDbData(): FullPortalData {
   try {
-    // 1. Try reading directly from project data/db.json first
-    if (fs.existsSync(DB_FILE)) {
-      const raw = fs.readFileSync(DB_FILE, 'utf-8');
+    // 1. Try reading from /tmp/db.json (serverless disk)
+    if (fs.existsSync(TMP_DB_FILE)) {
+      const raw = fs.readFileSync(TMP_DB_FILE, 'utf-8');
       const parsed = JSON.parse(raw) as FullPortalData;
       if (parsed && Array.isArray(parsed.payments)) {
-        if (!parsed.tableColumns || !Array.isArray(parsed.tableColumns) || parsed.tableColumns.length === 0) {
-          parsed.tableColumns = DEFAULT_TABLE_COLUMNS;
-        }
-        if (parsed.portalSettings) {
-          parsed.portalSettings.attorneyName = parsed.portalSettings.attorneyName || "FARHEEN MUSHIR";
-          parsed.portalSettings.attorneyNumber = parsed.portalSettings.attorneyNumber || "50565";
-        }
         globalThis.__PORTAL_DB__ = parsed;
         return parsed;
       }
     }
 
-    // 2. Try reading from /tmp/db.json (serverless disk)
-    if (fs.existsSync(TMP_DB_FILE)) {
-      const raw = fs.readFileSync(TMP_DB_FILE, 'utf-8');
+    // 2. Try reading from project data/db.json
+    if (fs.existsSync(DB_FILE)) {
+      const raw = fs.readFileSync(DB_FILE, 'utf-8');
       const parsed = JSON.parse(raw) as FullPortalData;
       if (parsed && Array.isArray(parsed.payments)) {
-        if (!parsed.tableColumns || !Array.isArray(parsed.tableColumns) || parsed.tableColumns.length === 0) {
-          parsed.tableColumns = DEFAULT_TABLE_COLUMNS;
-        }
-        if (parsed.portalSettings) {
-          parsed.portalSettings.attorneyName = parsed.portalSettings.attorneyName || "FARHEEN MUSHIR";
-          parsed.portalSettings.attorneyNumber = parsed.portalSettings.attorneyNumber || "50565";
-        }
         globalThis.__PORTAL_DB__ = parsed;
         return parsed;
       }
@@ -79,12 +42,12 @@ export function getDbData(): FullPortalData {
     console.error('Error reading DB data:', error);
   }
 
-  if (globalThis.__PORTAL_DB__) {
-    return globalThis.__PORTAL_DB__;
-  }
-
   globalThis.__PORTAL_DB__ = INITIAL_DATA;
   return INITIAL_DATA;
+}
+
+export async function getDbDataAsync(): Promise<FullPortalData> {
+  return getDbData();
 }
 
 export async function saveDbData(data: FullPortalData): Promise<void> {
@@ -106,12 +69,5 @@ export async function saveDbData(data: FullPortalData): Promise<void> {
     fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
   } catch (err) {
     // Ignore EROFS error on Vercel production serverless filesystem
-  }
-
-  // 3. Save to Firebase Firestore synchronously so cloud DB is updated before HTTP response
-  try {
-    await saveFirebaseData(data);
-  } catch (err) {
-    console.error('Firebase save error:', err);
   }
 }

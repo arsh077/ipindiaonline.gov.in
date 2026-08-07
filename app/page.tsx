@@ -6,8 +6,6 @@ import AdminDashboard from '@/components/AdminDashboard';
 import AdminLogin from '@/components/AdminLogin';
 import { INITIAL_DATA } from '@/lib/initial-data';
 import { FullPortalData } from '@/lib/types';
-import { doc, onSnapshot } from 'firebase/firestore';
-import { clientDb } from '@/lib/firebase-client';
 
 export default function Home() {
   const [data, setData] = useState<FullPortalData>(INITIAL_DATA);
@@ -160,25 +158,17 @@ export default function Home() {
       } catch (err) {}
     }
 
-    // 5. Direct Firestore Realtime WebSocket Listener (Instant Cross-Device Sync)
-    const unsub = onSnapshot(doc(clientDb, 'cms_portal', 'portal_data'), (snapshot) => {
-      if (snapshot.exists()) {
-        applyUpdate(snapshot.data());
-      }
-    });
-
-    // 6. Fast 1.2-Second Sync Fallback with Timestamp Busting
+    // 5. Fast Direct Native Server Sync (Every 1.5 Seconds)
     const intervalId = setInterval(() => {
       if (isMounted) {
         loadData();
       }
-    }, 1200);
+    }, 1500);
 
     return () => {
       isMounted = false;
       window.removeEventListener('storage', handleStorageEvent);
       window.removeEventListener('portal_live_update', handleCustomEvent);
-      if (unsub) unsub();
       if (broadcastChannel) broadcastChannel.close();
       clearInterval(intervalId);
     };
