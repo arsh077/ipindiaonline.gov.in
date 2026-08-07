@@ -30,16 +30,6 @@ export const INITIAL_DATA: FullPortalData = {
       classes: "35, 42",
       branch: "MUMBAI",
       price: 4500
-    },
-    {
-      id: "pay-2",
-      sNo: 2,
-      formNumber: "TM-M",
-      applicationNumber: "5948302",
-      referenceNumber: "TM/2024/88922",
-      classes: "35",
-      branch: "DELHI",
-      price: 900
     }
   ],
   tableColumns: DEFAULT_TABLE_COLUMNS,

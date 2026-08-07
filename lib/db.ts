@@ -18,16 +18,8 @@ declare global {
 const TMP_DB_FILE = path.join('/tmp', 'db.json');
 
 export async function getDbDataAsync(): Promise<FullPortalData> {
-  const firebaseData = await fetchFirebaseData();
-  if (firebaseData && Array.isArray(firebaseData.payments)) {
-    if (!firebaseData.portalSettings) {
-      firebaseData.portalSettings = { ...INITIAL_DATA.portalSettings };
-    }
-    firebaseData.portalSettings.attorneyName = firebaseData.portalSettings.attorneyName || "FARHEEN MUSHIR";
-    firebaseData.portalSettings.attorneyNumber = firebaseData.portalSettings.attorneyNumber || "50565";
-
-    globalThis.__PORTAL_DB__ = firebaseData;
-    return firebaseData;
+  if (globalThis.__PORTAL_DB__) {
+    return globalThis.__PORTAL_DB__;
   }
   return getDbData();
 }
