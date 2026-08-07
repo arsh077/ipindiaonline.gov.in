@@ -18,24 +18,34 @@ declare global {
 const TMP_DB_FILE = path.join('/tmp', 'db.json');
 
 export async function getDbDataAsync(): Promise<FullPortalData> {
-  const firebaseData = await fetchFirebaseData();
-  if (firebaseData && Array.isArray(firebaseData.payments)) {
-    if (!firebaseData.tableColumns || !Array.isArray(firebaseData.tableColumns) || firebaseData.tableColumns.length === 0) {
-      firebaseData.tableColumns = DEFAULT_TABLE_COLUMNS;
-    }
-    globalThis.__PORTAL_DB__ = firebaseData;
-    return firebaseData;
-  }
-  return getDbData();
+  const localData = getDbData();
+  
+  // Sync to Firebase in background if needed without blocking or overwriting local data
+  saveFirebaseData(localData).catch(() => {});
+
+  return localData;
 }
 
 export function getDbData(): FullPortalData {
-  if (globalThis.__PORTAL_DB__) {
-    return globalThis.__PORTAL_DB__;
-  }
-
   try {
-    // 1. Try reading from /tmp/db.json first (serverless writable disk)
+    // 1. Try reading directly from project data/db.json first
+    if (fs.existsSync(DB_FILE)) {
+      const raw = fs.readFileSync(DB_FILE, 'utf-8');
+      const parsed = JSON.parse(raw) as FullPortalData;
+      if (parsed && Array.isArray(parsed.payments)) {
+        if (!parsed.tableColumns || !Array.isArray(parsed.tableColumns) || parsed.tableColumns.length === 0) {
+          parsed.tableColumns = DEFAULT_TABLE_COLUMNS;
+        }
+        if (parsed.portalSettings) {
+          parsed.portalSettings.attorneyName = parsed.portalSettings.attorneyName || "FARHEEN MUSHIR";
+          parsed.portalSettings.attorneyNumber = parsed.portalSettings.attorneyNumber || "50565";
+        }
+        globalThis.__PORTAL_DB__ = parsed;
+        return parsed;
+      }
+    }
+
+    // 2. Try reading from /tmp/db.json (serverless disk)
     if (fs.existsSync(TMP_DB_FILE)) {
       const raw = fs.readFileSync(TMP_DB_FILE, 'utf-8');
       const parsed = JSON.parse(raw) as FullPortalData;
@@ -43,23 +53,20 @@ export function getDbData(): FullPortalData {
         if (!parsed.tableColumns || !Array.isArray(parsed.tableColumns) || parsed.tableColumns.length === 0) {
           parsed.tableColumns = DEFAULT_TABLE_COLUMNS;
         }
+        if (parsed.portalSettings) {
+          parsed.portalSettings.attorneyName = parsed.portalSettings.attorneyName || "FARHEEN MUSHIR";
+          parsed.portalSettings.attorneyNumber = parsed.portalSettings.attorneyNumber || "50565";
+        }
         globalThis.__PORTAL_DB__ = parsed;
         return parsed;
       }
     }
-
-    // 2. Try reading from project data/db.json
-    if (fs.existsSync(DB_FILE)) {
-      const raw = fs.readFileSync(DB_FILE, 'utf-8');
-      const parsed = JSON.parse(raw) as FullPortalData;
-      if (!parsed.tableColumns || !Array.isArray(parsed.tableColumns) || parsed.tableColumns.length === 0) {
-        parsed.tableColumns = DEFAULT_TABLE_COLUMNS;
-      }
-      globalThis.__PORTAL_DB__ = parsed;
-      return parsed;
-    }
   } catch (error) {
     console.error('Error reading DB data:', error);
+  }
+
+  if (globalThis.__PORTAL_DB__) {
+    return globalThis.__PORTAL_DB__;
   }
 
   globalThis.__PORTAL_DB__ = INITIAL_DATA;

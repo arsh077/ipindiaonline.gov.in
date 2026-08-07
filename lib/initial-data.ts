@@ -12,12 +12,13 @@ export const DEFAULT_TABLE_COLUMNS: TableColumn[] = [
 
 export const INITIAL_DATA: FullPortalData = {
   portalSettings: {
+    headerBanner: "/uploads/logo11.png",
     logo: "/images/ip-india-logo.svg",
     emblemImage: "/images/ashoka-emblem.svg",
     organizationName: "Office of the Controller General of Patents, Designs & Trade Marks",
     departmentName: "Department of Industrial Policy & Promotion,",
-    attorneyName: "RAJESH & ASSOCIATES",
-    attorneyNumber: "ATT/2024/7741"
+    attorneyName: "FARHEEN MUSHIR",
+    attorneyNumber: "50565"
   },
   payments: [
     {

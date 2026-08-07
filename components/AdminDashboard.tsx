@@ -73,49 +73,76 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
     }
   };
 
-  // Logo file upload handler (converts image to base64 Data URL)
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        showNotice("Image file size should be less than 2MB", "error");
-        return;
+  // Helper function to upload files permanently to public/uploads folder
+  const uploadFilePermanently = async (file: File, type: 'logo' | 'emblem' | 'banner'): Promise<string | null> => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('type', type);
+
+      const res = await fetch('/api/v1/admin/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.success && data.data?.url) {
+        return data.data.url;
+      } else {
+        showNotice(data.message || 'Upload failed', 'error');
+        return null;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setHeaderForm(prev => ({ ...prev, logo: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
+    } catch (err: any) {
+      showNotice(err.message || 'Error uploading file', 'error');
+      return null;
     }
   };
 
-  const handleEmblemUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 3 * 1024 * 1024) {
-        showNotice("Emblem image file size should be less than 3MB", "error");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setHeaderForm(prev => ({ ...prev, emblemImage: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleBannerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Logo file upload handler
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        showNotice("Banner image file size should be less than 5MB", "error");
+        showNotice("Image file size should be less than 5MB", "error");
         return;
       }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setHeaderForm(prev => ({ ...prev, headerBanner: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
+      showNotice("Uploading image permanently to folder...", "success");
+      const url = await uploadFilePermanently(file, 'logo');
+      if (url) {
+        setHeaderForm(prev => ({ ...prev, logo: url }));
+        showNotice("Logo uploaded and saved to public/uploads permanently!", "success");
+      }
+    }
+  };
+
+  const handleEmblemUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        showNotice("Emblem image file size should be less than 5MB", "error");
+        return;
+      }
+      showNotice("Uploading emblem permanently to folder...", "success");
+      const url = await uploadFilePermanently(file, 'emblem');
+      if (url) {
+        setHeaderForm(prev => ({ ...prev, emblemImage: url }));
+        showNotice("Emblem uploaded and saved to public/uploads permanently!", "success");
+      }
+    }
+  };
+
+  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        showNotice("Banner image file size should be less than 10MB", "error");
+        return;
+      }
+      showNotice("Uploading banner permanently to folder...", "success");
+      const url = await uploadFilePermanently(file, 'banner');
+      if (url) {
+        setHeaderForm(prev => ({ ...prev, headerBanner: url }));
+        showNotice("Header Banner uploaded and saved to public/uploads permanently!", "success");
+      }
     }
   };
 
