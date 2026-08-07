@@ -6,7 +6,8 @@ import AdminDashboard from '@/components/AdminDashboard';
 import AdminLogin from '@/components/AdminLogin';
 import { INITIAL_DATA } from '@/lib/initial-data';
 import { FullPortalData } from '@/lib/types';
-import { RefreshCw } from 'lucide-react';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { clientDb } from '@/lib/firebase';
 
 export default function Home() {
   const [data, setData] = useState<FullPortalData>(INITIAL_DATA);
@@ -63,38 +64,30 @@ export default function Home() {
     // 2. Fetch initial public data
     loadData();
 
-    // 3. Real-Time Firebase Listener (Instant Sub-Second Auto Update)
-    let unsub: (() => void) | null = null;
-    try {
-      import('@/lib/firebase').then(({ clientDb }) => {
-        import('firebase/firestore').then(({ doc, onSnapshot }) => {
-          if (!isMounted) return;
-          unsub = onSnapshot(doc(clientDb, 'cms_portal', 'portal_data'), (snapshot) => {
-            if (snapshot.exists() && isMounted) {
-              const fbData = snapshot.data();
-              if (fbData && Array.isArray(fbData.payments)) {
-                setData({
-                  portalSettings: fbData.portalSettings || INITIAL_DATA.portalSettings,
-                  payments: fbData.payments,
-                  tableColumns: fbData.tableColumns || INITIAL_DATA.tableColumns,
-                  terms: fbData.terms || INITIAL_DATA.terms,
-                  settings: fbData.settings || INITIAL_DATA.settings,
-                  admin: { username: 'admin', passwordHash: '' }
-                });
-                setLoading(false);
-              }
-            }
+    // 3. Direct Firestore Realtime WebSocket Listener (Instant 0ms Delay)
+    const unsub = onSnapshot(doc(clientDb, 'cms_portal', 'portal_data'), (snapshot) => {
+      if (snapshot.exists() && isMounted) {
+        const fbData = snapshot.data();
+        if (fbData && Array.isArray(fbData.payments)) {
+          setData({
+            portalSettings: fbData.portalSettings || INITIAL_DATA.portalSettings,
+            payments: fbData.payments,
+            tableColumns: fbData.tableColumns || INITIAL_DATA.tableColumns,
+            terms: fbData.terms || INITIAL_DATA.terms,
+            settings: fbData.settings || INITIAL_DATA.settings,
+            admin: { username: 'admin', passwordHash: '' }
           });
-        }).catch(() => {});
-      }).catch(() => {});
-    } catch (err) {}
+          setLoading(false);
+        }
+      }
+    });
 
-    // 4. Background Polling Fallback (Every 2.5 Seconds)
+    // 4. Ultra-Fast 500ms Sync Fallback
     const intervalId = setInterval(() => {
       if (isMounted) {
         loadData();
       }
-    }, 2500);
+    }, 500);
 
     return () => {
       isMounted = false;
