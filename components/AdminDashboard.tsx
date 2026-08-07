@@ -341,6 +341,31 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
     }
   };
 
+  const handleHardPurge = async () => {
+    setSaving(true);
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.clear();
+        sessionStorage.clear();
+      }
+      const fullData = getFullDataSnapshot(paymentsList);
+      triggerInstantBroadcast(fullData);
+
+      const res = await fetch('/api/v1/admin/purge', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        showNotice("🔥 Firebase Cloud & DB completely purged! Old data 100% erased.", "success");
+        onRefreshData();
+      } else {
+        showNotice(data.message || "Purge failed", "error");
+      }
+    } catch (err: any) {
+      showNotice(err.message || "Error purging database", "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // Handlers for Columns Manager
   const handleToggleColumn = (index: number) => {
     setColumnsList(prev => {
@@ -694,6 +719,16 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
                   >
                     {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                     Save All Changes
+                  </button>
+
+                  <button
+                    onClick={handleHardPurge}
+                    disabled={saving}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-red-900/80 hover:bg-red-800 text-red-100 border border-red-700 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md disabled:opacity-50"
+                    title="Completely erase old data from Firebase & Cloud Server"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    🔥 Hard Purge &amp; Overwrite Cloud DB
                   </button>
                 </div>
               </div>
