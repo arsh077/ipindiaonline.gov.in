@@ -96,7 +96,7 @@ export async function saveFirebaseData(data: FullPortalData): Promise<boolean> {
   // 1. Try Firebase Admin SDK first
   if (adminDb) {
     try {
-      await adminDb.collection(COLLECTION_NAME).doc(DOC_NAME).set(cleanData, { merge: true });
+      await adminDb.collection(COLLECTION_NAME).doc(DOC_NAME).set(cleanData);
       return true;
     } catch (error) {
       console.error('Admin SDK save error:', error);
@@ -106,7 +106,7 @@ export async function saveFirebaseData(data: FullPortalData): Promise<boolean> {
   // 2. Fallback to Client SDK
   try {
     const docRef = doc(clientDb, COLLECTION_NAME, DOC_NAME);
-    await setDoc(docRef, cleanData, { merge: true });
+    await setDoc(docRef, cleanData);
     return true;
   } catch (error) {
     console.error('Client SDK save error:', error);
