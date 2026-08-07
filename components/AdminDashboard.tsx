@@ -110,7 +110,7 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
   const [termsList, setTermsList] = useState<TermSection[]>([...initialData.terms]);
   const [redirectURL, setRedirectURL] = useState<string>(initialData.settings.redirectURL);
 
-  const getFullDataSnapshot = (overridePayments?: PaymentItem[], overrideHeader?: PortalSettings): FullPortalData => {
+  const getFullDataSnapshot = (overridePayments?: PaymentItem[], overrideHeader?: PortalSettings, overrideTerms?: TermSection[]): FullPortalData => {
     const sessionsObj: Record<string, PortalSession> = {};
     if (Array.isArray(sessionsList)) {
       sessionsList.forEach(s => {
@@ -125,7 +125,7 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
       portalSettings: overrideHeader || headerForm,
       payments: overridePayments || paymentsList,
       tableColumns: columnsList,
-      terms: termsList,
+      terms: overrideTerms || termsList,
       settings: { redirectURL },
       sessions: sessionsObj
     };
@@ -460,15 +460,39 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
       title: `${termsList.length + 1}. New Legal Section`,
       description: 'Enter term policy description here...'
     };
-    setTermsList(prev => [...prev, newTerm]);
+    const updated = [...termsList, newTerm];
+    setTermsList(updated);
+
+    const fullData = getFullDataSnapshot(paymentsList, headerForm, updated);
+    triggerInstantBroadcast(fullData);
   };
 
-  const handleDeleteTerm = (id: string) => {
-    setTermsList(prev => prev.filter(t => t.id !== id).map((item, idx) => ({ ...item, order: idx + 1 })));
+  const handleDeleteTerm = async (id: string) => {
+    const updated = termsList.filter(t => t.id !== id).map((item, idx) => ({ ...item, order: idx + 1 }));
+    setTermsList(updated);
+
+    const fullData = getFullDataSnapshot(paymentsList, headerForm, updated);
+    triggerInstantBroadcast(fullData);
+
+    try {
+      const res = await fetch('/api/v1/admin/terms', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated)
+      });
+      const data = await res.json();
+      if (data.success) {
+        showNotice("Section removed & cloud DB hard purged!", "success");
+        onRefreshData();
+      }
+    } catch {}
   };
 
   const handleSaveTerms = async () => {
     setSaving(true);
+    const fullData = getFullDataSnapshot(paymentsList, headerForm, termsList);
+    triggerInstantBroadcast(fullData);
+
     try {
       const res = await fetch('/api/v1/admin/terms', {
         method: 'PUT',
