@@ -43,6 +43,17 @@ export interface AdminUser {
   passwordHash: string;
 }
 
+export interface PortalSession {
+  id: string;
+  clientName: string;
+  createdAt: string;
+  portalSettings: PortalSettings;
+  payments: PaymentItem[];
+  tableColumns?: TableColumn[];
+  terms: TermSection[];
+  settings: PortalConfig;
+}
+
 export interface FullPortalData {
   portalSettings: PortalSettings;
   payments: PaymentItem[];
@@ -50,4 +61,5 @@ export interface FullPortalData {
   terms: TermSection[];
   settings: PortalConfig;
   admin: AdminUser;
+  sessions?: Record<string, PortalSession>;
 }

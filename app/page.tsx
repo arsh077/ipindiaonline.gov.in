@@ -19,6 +19,13 @@ export default function Home() {
   // Fetch Public / Session Data
   const loadData = useCallback(async () => {
     try {
+      // Check query params for session id (e.g. ?session=xxx or ?id=xxx)
+      let sessionParam = '';
+      if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        sessionParam = urlParams.get('session') || urlParams.get('id') || '';
+      }
+
       // First verify session if token exists
       const verifyRes = await fetch(`/api/v1/admin/verify?t=${Date.now()}`, { cache: 'no-store' });
       if (verifyRes.ok) {
@@ -28,8 +35,12 @@ export default function Home() {
         }
       }
 
-      // Fetch public portal data with cache-busting timestamp
-      const res = await fetch(`/api/v1/public-data?t=${Date.now()}`, { cache: 'no-store' });
+      // Fetch public portal data with cache-busting timestamp and session parameter
+      const fetchUrl = sessionParam 
+        ? `/api/v1/public-data?session=${encodeURIComponent(sessionParam)}&t=${Date.now()}` 
+        : `/api/v1/public-data?t=${Date.now()}`;
+
+      const res = await fetch(fetchUrl, { cache: 'no-store' });
       const json = await res.json();
       if (json.success) {
         setData({

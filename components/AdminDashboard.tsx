@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { FullPortalData, PaymentItem, TermSection, PortalSettings, TableColumn } from '@/lib/types';
+import { FullPortalData, PaymentItem, TermSection, PortalSettings, TableColumn, PortalSession } from '@/lib/types';
 import { 
   Building2, CreditCard, FileText, Globe, Key, 
-  Plus, Trash2, Save, LogOut, ArrowLeft, RefreshCw, CheckCircle, Upload, LayoutGrid, Eye, EyeOff
+  Plus, Trash2, Save, LogOut, ArrowLeft, RefreshCw, CheckCircle, Upload, LayoutGrid, Eye, EyeOff,
+  Share2, Copy, ExternalLink, Check, Link as LinkIcon
 } from 'lucide-react';
 
 import { doc, setDoc } from 'firebase/firestore';
@@ -28,9 +29,76 @@ interface AdminDashboardProps {
 }
 
 export default function AdminDashboard({ initialData, onLogout, onBackToPublic, onRefreshData }: AdminDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'header' | 'payments' | 'columns' | 'terms' | 'redirect' | 'credentials'>('payments');
+  const [activeTab, setActiveTab] = useState<'header' | 'payments' | 'columns' | 'terms' | 'redirect' | 'credentials' | 'links'>('payments');
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  // Shareable Link Generator states
+  const [sessionsList, setSessionsList] = useState<PortalSession[]>(
+    initialData.sessions ? Object.values(initialData.sessions) : []
+  );
+  const [clientTag, setClientTag] = useState<string>('');
+  const [copiedSessionId, setCopiedSessionId] = useState<string | null>(null);
+  const [generatingLink, setGeneratingLink] = useState(false);
+
+  const loadSessions = async () => {
+    try {
+      const res = await fetch('/api/v1/admin/sessions');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.data)) {
+        setSessionsList(data.data);
+      }
+    } catch (e) {}
+  };
+
+  const handleGenerateLink = async () => {
+    setGeneratingLink(true);
+    try {
+      const res = await fetch('/api/v1/admin/sessions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientName: clientTag.trim() || undefined,
+          payments: paymentsList,
+          portalSettings: headerForm
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        showNotice("Unique Client Link generated & saved permanently!");
+        setClientTag('');
+        loadSessions();
+        onRefreshData();
+      } else {
+        showNotice(data.message || "Failed to generate link", "error");
+      }
+    } catch (err: any) {
+      showNotice(err.message || "Error generating link", "error");
+    } finally {
+      setGeneratingLink(false);
+    }
+  };
+
+  const handleDeleteSession = async (id: string) => {
+    try {
+      const res = await fetch(`/api/v1/admin/sessions?id=${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (data.success) {
+        showNotice("Client Link deleted!");
+        loadSessions();
+        onRefreshData();
+      }
+    } catch (e) {}
+  };
+
+  const handleCopyLink = (sessionId: string) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://ipindiaonline-gov-in.vercel.app';
+    const fullUrl = `${origin}/?session=${sessionId}`;
+    navigator.clipboard.writeText(fullUrl);
+    setCopiedSessionId(sessionId);
+    showNotice("Client Link copied to clipboard!", "success");
+    setTimeout(() => setCopiedSessionId(null), 3000);
+  };
 
   // Form states
   const [headerForm, setHeaderForm] = useState<PortalSettings>({ ...initialData.portalSettings });
@@ -585,6 +653,18 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
             >
               <Key className="w-4 h-4" />
               Admin Credentials
+            </button>
+
+            <button
+              onClick={() => { setActiveTab('links'); loadSessions(); }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                activeTab === 'links'
+                  ? 'bg-amber-600 text-white shadow-md font-bold'
+                  : 'text-amber-400 hover:bg-slate-900 hover:text-amber-200'
+              }`}
+            >
+              <Share2 className="w-4 h-4" />
+              Client Link Generator 🔗
             </button>
           </div>
 
@@ -1222,6 +1302,127 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
                     className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-cyan-500"
                   />
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* 6. CLIENT LINK GENERATOR */}
+          {activeTab === 'links' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+                <div>
+                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                    <Share2 className="w-5 h-5 text-amber-400" />
+                    Shareable Client Link Generator
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Generate unique, permanent shareable links for specific clients. Even if the client refreshes 100 times, their link will NEVER reset!
+                  </p>
+                </div>
+              </div>
+
+              {/* Section 1: Generate New Link Card */}
+              <div className="bg-gradient-to-r from-slate-900 to-slate-950 p-6 rounded-xl border border-amber-500/30 shadow-xl space-y-4">
+                <h3 className="text-sm font-bold text-amber-300 flex items-center gap-2">
+                  <Plus className="w-4 h-4" />
+                  Generate New Unique Link for Current Payment Table Setup
+                </h3>
+                
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                  <input
+                    type="text"
+                    value={clientTag}
+                    onChange={(e) => setClientTag(e.target.value)}
+                    placeholder="Client Name or Reference (e.g. M/s Apex Traders)"
+                    className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-amber-500"
+                  />
+                  <button
+                    onClick={handleGenerateLink}
+                    disabled={generatingLink}
+                    className="px-5 py-2.5 bg-amber-600 hover:bg-amber-500 active:scale-95 text-white font-bold text-xs rounded-lg shadow-lg flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {generatingLink ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
+                    Generate &amp; Save Unique Link
+                  </button>
+                </div>
+
+                <p className="text-xs text-slate-400">
+                  💡 <span className="font-semibold text-slate-300">How it works:</span> Clicking generate takes the current payment rows ({paymentsList.length} rows, Total ₹{paymentsList.reduce((acc, item) => acc + (Number(item.price) || 0), 0)}), header, and attorney info and locks it permanently into a dedicated link.
+                </p>
+              </div>
+
+              {/* Section 2: List of Generated Client Links */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-bold text-slate-200">
+                  All Active Shareable Client Links ({sessionsList.length})
+                </h3>
+
+                {sessionsList.length === 0 ? (
+                  <div className="bg-slate-900/60 p-8 rounded-xl border border-slate-800 text-center text-slate-400 text-sm">
+                    No custom client links generated yet. Enter a client name above and click &quot;Generate &amp; Save Unique Link&quot; to create your first client link!
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-3">
+                    {sessionsList.map((session) => {
+                      const origin = typeof window !== 'undefined' ? window.location.origin : 'https://ipindiaonline-gov-in.vercel.app';
+                      const fullUrl = `${origin}/?session=${session.id}`;
+                      const totalAmount = session.payments?.reduce((acc, p) => acc + (Number(p.price) || 0), 0) || 0;
+                      const isCopied = copiedSessionId === session.id;
+
+                      return (
+                        <div key={session.id} className="bg-slate-900 p-4 rounded-xl border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div className="space-y-1 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-bold text-amber-300">
+                                {session.clientName}
+                              </span>
+                              <span className="text-[11px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
+                                {session.payments?.length || 0} Forms • Total ₹{totalAmount}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <code className="text-xs text-cyan-300 bg-slate-950 px-2 py-1 rounded border border-slate-800 select-all break-all">
+                                {fullUrl}
+                              </code>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleCopyLink(session.id)}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm ${
+                                isCopied 
+                                  ? 'bg-emerald-600 text-white' 
+                                  : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
+                              }`}
+                            >
+                              {isCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5 text-amber-400" />}
+                              {isCopied ? 'Copied!' : 'Copy Link'}
+                            </button>
+
+                            <a
+                              href={fullUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center gap-1.5 transition-all cursor-pointer"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5 text-cyan-400" />
+                              Test Link
+                            </a>
+
+                            <button
+                              onClick={() => handleDeleteSession(session.id)}
+                              className="p-1.5 rounded-lg bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800/50 transition-colors cursor-pointer"
+                              title="Delete Link"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           )}
