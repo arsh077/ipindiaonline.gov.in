@@ -847,35 +847,49 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
                   </p>
                 </div>
 
-                <button
-                  onClick={handleSaveColumns}
-                  disabled={saving}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-[#006078] hover:bg-[#00485F] text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                  Save Column Layout
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleSaveColumns}
+                    disabled={saving}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-[#006078] hover:bg-[#00485F] text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    Save Column Layout
+                  </button>
+
+                  <button
+                    onClick={handleHardPurge}
+                    disabled={saving}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-red-900/80 hover:bg-red-800 text-red-100 border border-red-700 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md disabled:opacity-50"
+                    title="Completely erase old data from Firebase & Cloud Server"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    🔥 Hard Purge &amp; Overwrite Cloud DB
+                  </button>
+                </div>
               </div>
 
               {/* Add New Custom Column Form */}
-              <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-col sm:flex-row items-center gap-3">
-                <div className="flex-1 w-full">
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Add New Column Title</label>
+              <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3">
+                <label className="block text-xs font-semibold text-slate-300">
+                  Add New Column Title
+                </label>
+                <div className="flex items-center gap-2">
                   <input
                     type="text"
                     value={newColLabel}
                     onChange={(e) => setNewColLabel(e.target.value)}
                     placeholder="e.g. Filing Date, Applicant Name, Status"
-                    className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                    className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-cyan-500"
                   />
+                  <button
+                    onClick={handleAddColumn}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Column
+                  </button>
                 </div>
-                <button
-                  onClick={handleAddColumn}
-                  className="w-full sm:w-auto mt-auto flex items-center justify-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Column
-                </button>
               </div>
 
               {/* Columns Table */}
@@ -883,80 +897,57 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
                 <table className="w-full text-left text-xs text-slate-200">
                   <thead className="bg-slate-900 text-slate-400 uppercase font-semibold border-b border-slate-800">
                     <tr>
-                      <th className="p-3 w-12 text-center">#</th>
-                      <th className="p-3">Column Header Title</th>
-                      <th className="p-3">Field Key</th>
-                      <th className="p-3 text-center">Visibility</th>
-                      <th className="p-3 text-center w-28">Actions</th>
+                      <th className="p-2.5 w-12 text-center">#</th>
+                      <th className="p-2.5">Column Header Title</th>
+                      <th className="p-2.5">Field Key</th>
+                      <th className="p-2.5">Visibility</th>
+                      <th className="p-2.5 text-center w-24">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800">
                     {columnsList.map((col, index) => (
-                      <tr 
-                        key={col.id || index} 
-                        className={`transition-all duration-500 ease-in-out ${
-                          deletingColId === col.id 
-                            ? 'bg-red-900/60 opacity-0 scale-y-0 translate-x-[100%] h-0 overflow-hidden' 
-                            : 'hover:bg-slate-900/50 opacity-100 scale-y-100 translate-x-0'
-                        }`}
-                        style={{
-                          transformOrigin: 'top center',
-                          ...(deletingColId === col.id ? { maxHeight: '0px', padding: 0 } : {})
-                        }}
-                      >
-                        <td className="p-3 text-center font-mono text-slate-400">{index + 1}</td>
-                        <td className="p-3">
+                      <tr key={col.id || index} className="hover:bg-slate-900/50">
+                        <td className="p-2 text-center font-mono text-slate-400">{index + 1}</td>
+                        <td className="p-2">
                           <input
                             type="text"
                             value={col.label}
                             onChange={(e) => handleUpdateColumnLabel(index, e.target.value)}
-                            className="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-slate-100 focus:outline-none focus:border-cyan-500 font-medium"
+                            className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-100 focus:outline-none focus:border-cyan-500"
                           />
                         </td>
-                        <td className="p-3 font-mono text-slate-400 text-[11px]">{col.key}</td>
-                        <td className="p-3 text-center">
+                        <td className="p-2 font-mono text-slate-400 text-[11px]">{col.key}</td>
+                        <td className="p-2">
                           <button
-                            type="button"
                             onClick={() => handleToggleColumn(index)}
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold cursor-pointer transition-colors ${
-                              col.visible !== false
-                                ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
-                                : 'bg-slate-800 text-slate-400 border border-slate-700'
+                            className={`px-2.5 py-1 rounded-full text-[11px] font-semibold flex items-center gap-1 cursor-pointer transition-colors ${
+                              col.visible ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-slate-800 text-slate-400 border border-slate-700'
                             }`}
                           >
-                            {col.visible !== false ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-                            {col.visible !== false ? 'Visible' : 'Hidden'}
+                            {col.visible ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                            {col.visible ? 'Visible' : 'Hidden'}
                           </button>
                         </td>
-                        <td className="p-3 text-center">
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteColumn(col.id)}
-                            className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-950/50 rounded cursor-pointer transition-colors"
-                            title="Remove Column"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                        <td className="p-2 text-center">
+                          {!['sNo', 'formNumber', 'applicationNumber', 'referenceNumber', 'classes', 'branch', 'price'].includes(col.key) && (
+                            <button
+                              onClick={() => handleDeleteColumn(col.id)}
+                              className="p-1 text-red-400 hover:text-red-300 hover:bg-red-950/50 rounded cursor-pointer transition-colors"
+                              title="Delete Column"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-
-              <div className="bg-cyan-950/30 border border-cyan-800/50 rounded-xl p-4 text-xs text-cyan-200 flex items-start gap-3">
-                <LayoutGrid className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="font-bold text-cyan-100 mb-1">Layout Auto-Resize Mechanism</h4>
-                  <p className="text-cyan-200/80 leading-relaxed">
-                    When columns are hidden or added, the dark grey container (<span className="font-mono text-amber-300">#424242</span>) on the public payment portal automatically contracts or expands its width and height to maintain exact optical balance and alignment.
-                  </p>
-                </div>
-              </div>
             </div>
           )}
 
-          {/* 3. HEADER & PORTAL IDENTITY */}
+          {/* 3. HEADER & IDENTITY SETTINGS */}
           {activeTab === 'header' && (
             <div className="space-y-6">
               <div className="flex items-center justify-between border-b border-slate-800 pb-4">
@@ -970,14 +961,26 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
                   </p>
                 </div>
 
-                <button
-                  onClick={handleSaveHeader}
-                  disabled={saving}
-                  className="flex items-center gap-1.5 px-4 py-1.5 bg-[#006078] hover:bg-[#00485F] text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                  Save Header Settings
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleSaveHeader}
+                    disabled={saving}
+                    className="flex items-center gap-1.5 px-4 py-1.5 bg-[#006078] hover:bg-[#00485F] text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    Save Header Settings
+                  </button>
+
+                  <button
+                    onClick={handleHardPurge}
+                    disabled={saving}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-red-900/80 hover:bg-red-800 text-red-100 border border-red-700 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md disabled:opacity-50"
+                    title="Completely erase old data from Firebase & Cloud Server"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    🔥 Hard Purge &amp; Overwrite Cloud DB
+                  </button>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1025,85 +1028,10 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
                   </div>
                 </div>
 
-                {/* 2. Right IP India Logo Upload */}
-                <div className="space-y-3 bg-slate-900 p-4 rounded-xl border border-slate-800">
+                {/* 3. Organization Name */}
+                <div className="space-y-2 md:col-span-2">
                   <label className="block text-xs font-semibold text-slate-300">
-                    Right Logo Image (Intellectual Property India)
-                  </label>
-                  <div className="flex items-center gap-4">
-                    <div className="w-20 h-20 bg-slate-950 border border-slate-800 rounded-lg flex items-center justify-center p-1 overflow-hidden shrink-0">
-                      {headerForm.logo === 'none' ? (
-                        <span className="text-[10px] text-red-400 font-semibold italic text-center">No Logo (Deleted)</span>
-                      ) : (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img src={headerForm.logo && !headerForm.logo.includes('svg+xml') ? headerForm.logo : '/images/ip-india-logo.svg'} alt="Preview Logo" className="max-w-full max-h-full object-contain" />
-                      )}
-                    </div>
-                    <div className="flex-1 space-y-2">
-                      <label className="flex items-center justify-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium cursor-pointer transition-colors border border-slate-700">
-                        <Upload className="w-3.5 h-3.5" />
-                        Upload Logo Image
-                        <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
-                      </label>
-                      <div className="flex items-center gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setHeaderForm(prev => ({ ...prev, logo: 'none' }))}
-                          className="flex items-center gap-1 text-[11px] text-red-400 hover:text-red-300 font-medium hover:underline"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                          Delete Logo
-                        </button>
-                        {headerForm.logo !== '' && (
-                          <button
-                            type="button"
-                            onClick={() => setHeaderForm(prev => ({ ...prev, logo: '' }))}
-                            className="text-[11px] text-slate-400 hover:text-slate-200 hover:underline"
-                          >
-                            Reset to default
-                          </button>
-                        )}
-                      </div>
-                      <p className="text-[11px] text-slate-400">Supported formats: PNG, JPG, SVG (&lt; 2MB)</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 3. Complete Single Header Banner Upload (Optional) */}
-                <div className="md:col-span-2 space-y-3 bg-slate-900 p-4 rounded-xl border border-slate-800">
-                  <label className="block text-xs font-semibold text-slate-300">
-                    Full Header Banner Image (Optional - Overrides main header with 1 single image)
-                  </label>
-                  <div className="flex flex-col sm:flex-row items-center gap-4">
-                    {headerForm.headerBanner && (
-                      <div className="h-16 w-full sm:w-64 bg-slate-950 border border-slate-800 rounded-lg flex items-center justify-center p-1 overflow-hidden shrink-0">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={headerForm.headerBanner} alt="Preview Banner" className="max-w-full max-h-full object-contain" />
-                      </div>
-                    )}
-                    <div className="flex-1 w-full space-y-2">
-                      <label className="flex items-center justify-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium cursor-pointer transition-colors border border-slate-700">
-                        <Upload className="w-3.5 h-3.5" />
-                        {headerForm.headerBanner ? 'Replace Header Banner Image' : 'Upload Full Header Banner Image'}
-                        <input type="file" accept="image/*" onChange={handleBannerUpload} className="hidden" />
-                      </label>
-                      {headerForm.headerBanner && (
-                        <button
-                          type="button"
-                          onClick={() => setHeaderForm(prev => ({ ...prev, headerBanner: '' }))}
-                          className="text-[11px] text-red-400 hover:underline block"
-                        >
-                          Remove custom banner image (use standard emblem & text layout)
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Organization Name */}
-                <div className="space-y-2">
-                  <label className="block text-xs font-semibold text-slate-300">
-                    Organization Name
+                    Organization Name (Main Header Line 1)
                   </label>
                   <input
                     type="text"
@@ -1116,7 +1044,7 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
                 {/* Department Name */}
                 <div className="space-y-2 md:col-span-2">
                   <label className="block text-xs font-semibold text-slate-300">
-                    Department Name / Subtitle
+                    Department Name (Main Header Line 2)
                   </label>
                   <input
                     type="text"
@@ -1125,37 +1053,11 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
                     className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-cyan-500"
                   />
                 </div>
-
-                {/* Attorney Name */}
-                <div className="space-y-2">
-                  <label className="block text-xs font-semibold text-slate-300">
-                    Welcome Attorney Name (Top Strip)
-                  </label>
-                  <input
-                    type="text"
-                    value={headerForm.attorneyName}
-                    onChange={(e) => setHeaderForm({ ...headerForm, attorneyName: e.target.value })}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-cyan-500"
-                  />
-                </div>
-
-                {/* Attorney Number */}
-                <div className="space-y-2">
-                  <label className="block text-xs font-semibold text-slate-300">
-                    Attorney Code / Registration Number
-                  </label>
-                  <input
-                    type="text"
-                    value={headerForm.attorneyNumber}
-                    onChange={(e) => setHeaderForm({ ...headerForm, attorneyNumber: e.target.value })}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-cyan-500"
-                  />
-                </div>
               </div>
             </div>
           )}
 
-          {/* 3. TERMS & CONDITIONS EDITOR */}
+          {/* 4. TERMS & CONDITIONS EDITOR */}
           {activeTab === 'terms' && (
             <div className="space-y-6">
               <div className="flex items-center justify-between border-b border-slate-800 pb-4">
@@ -1185,6 +1087,16 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
                   >
                     {saving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                     Save Terms
+                  </button>
+
+                  <button
+                    onClick={handleHardPurge}
+                    disabled={saving}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-red-900/80 hover:bg-red-800 text-red-100 border border-red-700 rounded-lg text-xs font-bold transition-all cursor-pointer shadow-md disabled:opacity-50"
+                    title="Completely erase old data from Firebase & Cloud Server"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    🔥 Hard Purge &amp; Overwrite Cloud DB
                   </button>
                 </div>
               </div>
