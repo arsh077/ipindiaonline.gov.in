@@ -11,7 +11,13 @@ import { clientDb } from '@/lib/firebase-client';
 
 export default function Home() {
   const [data, setData] = useState<FullPortalData>(INITIAL_DATA);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.has('session') || urlParams.has('id');
+    }
+    return false;
+  });
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [viewMode, setViewMode] = useState<'public' | 'admin'>('public');
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
@@ -42,13 +48,13 @@ export default function Home() {
 
       const res = await fetch(fetchUrl, { cache: 'no-store' });
       const json = await res.json();
-      if (json.success) {
+      if (json.success && json.data) {
         setData({
-          portalSettings: json.data.portalSettings,
-          payments: json.data.payments,
-          tableColumns: json.data.tableColumns,
-          terms: json.data.terms,
-          settings: { redirectURL: json.data.redirectURL },
+          portalSettings: json.data.portalSettings || INITIAL_DATA.portalSettings,
+          payments: json.data.payments || [],
+          tableColumns: json.data.tableColumns || INITIAL_DATA.tableColumns,
+          terms: json.data.terms || INITIAL_DATA.terms,
+          settings: { redirectURL: json.data.redirectURL || INITIAL_DATA.settings.redirectURL },
           admin: { username: 'admin', passwordHash: '' }
         });
       }
@@ -119,12 +125,14 @@ export default function Home() {
 
     // 2. Initial fetch & local storage check
     loadData();
-    try {
-      const stored = localStorage.getItem('portal_live_data');
-      if (stored) {
-        applyUpdate(JSON.parse(stored));
-      }
-    } catch (e) {}
+    if (!sessionParam) {
+      try {
+        const stored = localStorage.getItem('portal_live_data');
+        if (stored) {
+          applyUpdate(JSON.parse(stored));
+        }
+      } catch (e) {}
+    }
 
     // 3. LocalStorage & Custom Event Listeners (Instant 0ms Same-Browser Sync)
     const handleStorageEvent = (e: StorageEvent) => {
