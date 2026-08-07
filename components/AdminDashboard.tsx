@@ -110,6 +110,27 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
   const [termsList, setTermsList] = useState<TermSection[]>([...initialData.terms]);
   const [redirectURL, setRedirectURL] = useState<string>(initialData.settings.redirectURL);
 
+  const getFullDataSnapshot = (overridePayments?: PaymentItem[], overrideHeader?: PortalSettings): FullPortalData => {
+    const sessionsObj: Record<string, PortalSession> = {};
+    if (Array.isArray(sessionsList)) {
+      sessionsList.forEach(s => {
+        sessionsObj[s.id] = s;
+      });
+    } else if (initialData.sessions) {
+      Object.assign(sessionsObj, initialData.sessions);
+    }
+
+    return {
+      ...initialData,
+      portalSettings: overrideHeader || headerForm,
+      payments: overridePayments || paymentsList,
+      tableColumns: columnsList,
+      terms: termsList,
+      settings: { redirectURL },
+      sessions: sessionsObj
+    };
+  };
+
   // Helper for 0ms instant broadcast to all clients & open tabs
   const triggerInstantBroadcast = (fullData: FullPortalData) => {
     if (typeof window !== 'undefined') {
@@ -145,14 +166,7 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
   // Handler for Header Save
   const handleSaveHeader = async () => {
     setSaving(true);
-    const fullData: FullPortalData = {
-      ...initialData,
-      portalSettings: headerForm,
-      payments: paymentsList,
-      tableColumns: columnsList,
-      terms: termsList,
-      settings: { redirectURL }
-    };
+    const fullData = getFullDataSnapshot(paymentsList, headerForm);
     triggerInstantBroadcast(fullData);
 
     try {
@@ -264,14 +278,7 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
     const updated = [...paymentsList, newRow];
     setPaymentsList(updated);
 
-    const fullData: FullPortalData = {
-      ...initialData,
-      portalSettings: headerForm,
-      payments: updated,
-      tableColumns: columnsList,
-      terms: termsList,
-      settings: { redirectURL }
-    };
+    const fullData = getFullDataSnapshot(updated);
     triggerInstantBroadcast(fullData);
   };
 
@@ -280,14 +287,7 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
       const copy = [...prev];
       copy[index] = { ...copy[index], [field]: value };
 
-      const fullData: FullPortalData = {
-        ...initialData,
-        portalSettings: headerForm,
-        payments: copy,
-        tableColumns: columnsList,
-        terms: termsList,
-        settings: { redirectURL }
-      };
+      const fullData = getFullDataSnapshot(copy);
       triggerInstantBroadcast(fullData);
 
       return copy;
@@ -300,14 +300,7 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
     setPaymentsList(updated);
     setDeletingRowId(null);
 
-    const fullData: FullPortalData = {
-      ...initialData,
-      portalSettings: headerForm,
-      payments: updated,
-      tableColumns: columnsList,
-      terms: termsList,
-      settings: { redirectURL }
-    };
+    const fullData = getFullDataSnapshot(updated);
     triggerInstantBroadcast(fullData);
 
     // Auto-save to backend
@@ -325,14 +318,7 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
 
   const handleSavePayments = async () => {
     setSaving(true);
-    const fullData: FullPortalData = {
-      ...initialData,
-      portalSettings: headerForm,
-      payments: paymentsList,
-      tableColumns: columnsList,
-      terms: termsList,
-      settings: { redirectURL }
-    };
+    const fullData = getFullDataSnapshot(paymentsList);
     triggerInstantBroadcast(fullData);
 
     try {

@@ -62,9 +62,39 @@ export default function Home() {
   useEffect(() => {
     let isMounted = true;
 
+    // Check if client is viewing a specific session link
+    let sessionParam = '';
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      sessionParam = urlParams.get('session') || urlParams.get('id') || '';
+    }
+
     // Helper to apply instant update
     const applyUpdate = (syncData: any) => {
-      if (syncData && Array.isArray(syncData.payments) && isMounted) {
+      if (!isMounted || !syncData) return;
+
+      // 🔒 IF USER IS ON A SPECIFIC CLIENT LINK (?session=xxx), LOCK IT TO THAT SESSION ONLY!
+      if (sessionParam) {
+        if (syncData.sessions && syncData.sessions[sessionParam]) {
+          const sessData = syncData.sessions[sessionParam];
+          if (sessData && Array.isArray(sessData.payments)) {
+            setData({
+              portalSettings: sessData.portalSettings || INITIAL_DATA.portalSettings,
+              payments: sessData.payments,
+              tableColumns: sessData.tableColumns || INITIAL_DATA.tableColumns,
+              terms: sessData.terms || INITIAL_DATA.terms,
+              settings: sessData.settings || INITIAL_DATA.settings,
+              admin: { username: 'admin', passwordHash: '' }
+            });
+            setLoading(false);
+          }
+        }
+        // NEVER overwrite a session link with global main payments table!
+        return;
+      }
+
+      // Main default page (no session param)
+      if (Array.isArray(syncData.payments)) {
         setData({
           portalSettings: syncData.portalSettings || INITIAL_DATA.portalSettings,
           payments: syncData.payments,
