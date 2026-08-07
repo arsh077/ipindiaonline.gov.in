@@ -106,18 +106,10 @@ export default function Home() {
       }
     });
 
-    // 5. Ultra-Fast 100ms Sync Fallback
-    const intervalId = setInterval(() => {
-      if (isMounted) {
-        loadData();
-      }
-    }, 100);
-
     return () => {
       isMounted = false;
       if (unsub) unsub();
       if (broadcastChannel) broadcastChannel.close();
-      clearInterval(intervalId);
     };
   }, [loadData]);
 
