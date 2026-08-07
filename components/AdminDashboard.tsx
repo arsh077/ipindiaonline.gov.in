@@ -7,6 +7,9 @@ import {
   Plus, Trash2, Save, LogOut, ArrowLeft, RefreshCw, CheckCircle, Upload, LayoutGrid, Eye, EyeOff
 } from 'lucide-react';
 
+import { doc, setDoc } from 'firebase/firestore';
+import { clientDb } from '@/lib/firebase';
+
 const DEFAULT_COLS: TableColumn[] = [
   { id: 'col-sno', key: 'sNo', label: 'S. No.', visible: true },
   { id: 'col-formNumber', key: 'formNumber', label: 'Form Number', visible: true },
@@ -38,6 +41,20 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
   const [newColLabel, setNewColLabel] = useState<string>('');
   const [termsList, setTermsList] = useState<TermSection[]>([...initialData.terms]);
   const [redirectURL, setRedirectURL] = useState<string>(initialData.settings.redirectURL);
+
+  // Helper for 0ms instant broadcast to all clients & open tabs
+  const triggerInstantBroadcast = (fullData: FullPortalData) => {
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        const bc = new BroadcastChannel('portal_instant_sync');
+        bc.postMessage(fullData);
+        bc.close();
+      } catch (e) {}
+    }
+    try {
+      setDoc(doc(clientDb, 'cms_portal', 'portal_data'), fullData).catch(() => {});
+    } catch (e) {}
+  };
   
   // Credentials
   const [newUsername, setNewUsername] = useState<string>('');
@@ -53,6 +70,16 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
   // Handler for Header Save
   const handleSaveHeader = async () => {
     setSaving(true);
+    const fullData: FullPortalData = {
+      ...initialData,
+      portalSettings: headerForm,
+      payments: paymentsList,
+      tableColumns: columnsList,
+      terms: termsList,
+      settings: { redirectURL }
+    };
+    triggerInstantBroadcast(fullData);
+
     try {
       const res = await fetch('/api/v1/admin/settings/header', {
         method: 'PUT',
@@ -159,41 +186,80 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
       branch: 'DELHI',
       price: 4500
     };
-    setPaymentsList(prev => [...prev, newRow]);
+    const updated = [...paymentsList, newRow];
+    setPaymentsList(updated);
+
+    const fullData: FullPortalData = {
+      ...initialData,
+      portalSettings: headerForm,
+      payments: updated,
+      tableColumns: columnsList,
+      terms: termsList,
+      settings: { redirectURL }
+    };
+    triggerInstantBroadcast(fullData);
   };
 
   const handleUpdatePayment = (index: number, field: keyof PaymentItem, value: any) => {
     setPaymentsList(prev => {
       const copy = [...prev];
       copy[index] = { ...copy[index], [field]: value };
+
+      const fullData: FullPortalData = {
+        ...initialData,
+        portalSettings: headerForm,
+        payments: copy,
+        tableColumns: columnsList,
+        terms: termsList,
+        settings: { redirectURL }
+      };
+      triggerInstantBroadcast(fullData);
+
       return copy;
     });
   };
 
   const handleDeletePayment = (id: string) => {
     setDeletingRowId(id);
-    setTimeout(async () => {
-      const updated = paymentsList.filter(p => p.id !== id).map((item, idx) => ({ ...item, sNo: idx + 1 }));
-      setPaymentsList(updated);
-      setDeletingRowId(null);
-      // Auto-save to backend
-      try {
-        const res = await fetch('/api/v1/admin/payments', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updated)
-        });
-        const data = await res.json();
-        if (data.success) {
-          showNotice("Row deleted & saved!");
-          onRefreshData();
-        }
-      } catch {}
-    }, 600);
+    const updated = paymentsList.filter(p => p.id !== id).map((item, idx) => ({ ...item, sNo: idx + 1 }));
+    setPaymentsList(updated);
+    setDeletingRowId(null);
+
+    const fullData: FullPortalData = {
+      ...initialData,
+      portalSettings: headerForm,
+      payments: updated,
+      tableColumns: columnsList,
+      terms: termsList,
+      settings: { redirectURL }
+    };
+    triggerInstantBroadcast(fullData);
+
+    // Auto-save to backend
+    fetch('/api/v1/admin/payments', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updated)
+    }).then(res => res.json()).then(data => {
+      if (data.success) {
+        showNotice("Row deleted & saved!");
+        onRefreshData();
+      }
+    }).catch(() => {});
   };
 
   const handleSavePayments = async () => {
     setSaving(true);
+    const fullData: FullPortalData = {
+      ...initialData,
+      portalSettings: headerForm,
+      payments: paymentsList,
+      tableColumns: columnsList,
+      terms: termsList,
+      settings: { redirectURL }
+    };
+    triggerInstantBroadcast(fullData);
+
     try {
       const res = await fetch('/api/v1/admin/payments', {
         method: 'PUT',

@@ -64,7 +64,31 @@ export default function Home() {
     // 2. Fetch initial public data
     loadData();
 
-    // 3. Direct Firestore Realtime WebSocket Listener (Instant 0ms Delay)
+    // 3. Instant 0ms BroadcastChannel Listener (Cross-tab instant memory channel)
+    let broadcastChannel: BroadcastChannel | null = null;
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        broadcastChannel = new BroadcastChannel('portal_instant_sync');
+        broadcastChannel.onmessage = (event) => {
+          if (event.data && isMounted) {
+            const syncData = event.data;
+            if (syncData && Array.isArray(syncData.payments)) {
+              setData({
+                portalSettings: syncData.portalSettings || INITIAL_DATA.portalSettings,
+                payments: syncData.payments,
+                tableColumns: syncData.tableColumns || INITIAL_DATA.tableColumns,
+                terms: syncData.terms || INITIAL_DATA.terms,
+                settings: syncData.settings || INITIAL_DATA.settings,
+                admin: { username: 'admin', passwordHash: '' }
+              });
+              setLoading(false);
+            }
+          }
+        };
+      } catch (err) {}
+    }
+
+    // 4. Direct Firestore Realtime WebSocket Listener (Instant 10ms Delay)
     const unsub = onSnapshot(doc(clientDb, 'cms_portal', 'portal_data'), (snapshot) => {
       if (snapshot.exists() && isMounted) {
         const fbData = snapshot.data();
@@ -82,16 +106,17 @@ export default function Home() {
       }
     });
 
-    // 4. Ultra-Fast 500ms Sync Fallback
+    // 5. Ultra-Fast 100ms Sync Fallback
     const intervalId = setInterval(() => {
       if (isMounted) {
         loadData();
       }
-    }, 500);
+    }, 100);
 
     return () => {
       isMounted = false;
       if (unsub) unsub();
+      if (broadcastChannel) broadcastChannel.close();
       clearInterval(intervalId);
     };
   }, [loadData]);
