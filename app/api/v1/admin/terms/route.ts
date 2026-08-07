@@ -13,7 +13,7 @@ export async function PUT(req: NextRequest) {
     const parsed = await readJson(req); if (parsed.response) return parsed.response;
     const db = await getDbDataAsync();
     db.terms = terms(parsed.data);
-    saveDbData(db);
+    await saveDbData(db);
 
     return ok(db.terms, 'Terms updated successfully');
   } catch (err) {

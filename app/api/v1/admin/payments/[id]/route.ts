@@ -22,7 +22,7 @@ export async function DELETE(
     item.sNo = index + 1;
   });
 
-  saveDbData(db);
+  await saveDbData(db);
 
   return ok(db.payments, 'Payment deleted successfully');
 }

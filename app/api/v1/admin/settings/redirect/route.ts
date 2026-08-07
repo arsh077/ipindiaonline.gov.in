@@ -15,7 +15,7 @@ export async function PUT(req: NextRequest) {
 
     const db = await getDbDataAsync();
     db.settings.redirectURL = url(parsed.data.redirectURL, 'redirectURL');
-    saveDbData(db);
+    await saveDbData(db);
 
     return ok(db.settings, 'Redirect URL updated successfully');
   } catch (err) {

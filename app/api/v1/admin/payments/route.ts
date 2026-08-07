@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       item.sNo = index + 1;
     });
 
-    saveDbData(db);
+    await saveDbData(db);
 
     return ok(db.payments, 'Payment item created successfully', 201);
   } catch (err) {
@@ -57,7 +57,7 @@ export async function PUT(req: NextRequest) {
       }
     }
 
-    saveDbData(db);
+    await saveDbData(db);
 
     return ok(db.payments, 'Payments updated successfully');
   } catch (err) {

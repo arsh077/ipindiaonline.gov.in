@@ -14,7 +14,7 @@ export async function PUT(req: NextRequest) {
     const db = await getDbDataAsync();
     db.portalSettings = portalSettings(parsed.data, db.portalSettings);
 
-    saveDbData(db);
+    await saveDbData(db);
 
     return ok(db.portalSettings, 'Header settings updated successfully');
   } catch (err) {

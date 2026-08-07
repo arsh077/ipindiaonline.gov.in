@@ -28,7 +28,7 @@ export async function PUT(req: NextRequest) {
     }
     if (newUsername === undefined && newPassword === undefined) return fail('Provide a username or password');
 
-    saveDbData(db);
+    await saveDbData(db);
 
     return ok({ username: db.admin.username }, 'Admin credentials updated successfully');
   } catch (err) {
