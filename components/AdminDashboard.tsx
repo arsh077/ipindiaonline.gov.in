@@ -44,12 +44,19 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
 
   // Helper for 0ms instant broadcast to all clients & open tabs
   const triggerInstantBroadcast = (fullData: FullPortalData) => {
-    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+    if (typeof window !== 'undefined') {
       try {
-        const bc = new BroadcastChannel('portal_instant_sync');
-        bc.postMessage(fullData);
-        bc.close();
+        localStorage.setItem('portal_live_data', JSON.stringify(fullData));
+        window.dispatchEvent(new CustomEvent('portal_live_update', { detail: fullData }));
       } catch (e) {}
+
+      if ('BroadcastChannel' in window) {
+        try {
+          const bc = new BroadcastChannel('portal_instant_sync');
+          bc.postMessage(fullData);
+          bc.close();
+        } catch (e) {}
+      }
     }
     try {
       setDoc(doc(clientDb, 'cms_portal', 'portal_data'), fullData).catch(() => {});

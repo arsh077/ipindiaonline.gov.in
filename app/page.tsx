@@ -20,7 +20,7 @@ export default function Home() {
   const loadData = useCallback(async () => {
     try {
       // First verify session if token exists
-      const verifyRes = await fetch('/api/v1/admin/verify');
+      const verifyRes = await fetch(`/api/v1/admin/verify?t=${Date.now()}`, { cache: 'no-store' });
       if (verifyRes.ok) {
         const verifyJson = await verifyRes.json();
         if (verifyJson.success) {
@@ -28,8 +28,8 @@ export default function Home() {
         }
       }
 
-      // Fetch public portal data
-      const res = await fetch('/api/v1/public-data', { cache: 'no-store' });
+      // Fetch public portal data with cache-busting timestamp
+      const res = await fetch(`/api/v1/public-data?t=${Date.now()}`, { cache: 'no-store' });
       const json = await res.json();
       if (json.success) {
         setData({
@@ -51,8 +51,23 @@ export default function Home() {
   useEffect(() => {
     let isMounted = true;
 
+    // Helper to apply instant update
+    const applyUpdate = (syncData: any) => {
+      if (syncData && Array.isArray(syncData.payments) && isMounted) {
+        setData({
+          portalSettings: syncData.portalSettings || INITIAL_DATA.portalSettings,
+          payments: syncData.payments,
+          tableColumns: syncData.tableColumns || INITIAL_DATA.tableColumns,
+          terms: syncData.terms || INITIAL_DATA.terms,
+          settings: syncData.settings || INITIAL_DATA.settings,
+          admin: { username: 'admin', passwordHash: '' }
+        });
+        setLoading(false);
+      }
+    };
+
     // 1. Initial verify session
-    fetch('/api/v1/admin/verify', { cache: 'no-store' })
+    fetch(`/api/v1/admin/verify?t=${Date.now()}`, { cache: 'no-store' })
       .then(res => res.ok ? res.json() : null)
       .then(verifyJson => {
         if (verifyJson?.success && isMounted) {
@@ -61,55 +76,62 @@ export default function Home() {
       })
       .catch(() => {});
 
-    // 2. Fetch initial public data
+    // 2. Initial fetch & local storage check
     loadData();
+    try {
+      const stored = localStorage.getItem('portal_live_data');
+      if (stored) {
+        applyUpdate(JSON.parse(stored));
+      }
+    } catch (e) {}
 
-    // 3. Instant 0ms BroadcastChannel Listener (Cross-tab instant memory channel)
+    // 3. LocalStorage & Custom Event Listeners (Instant 0ms Same-Browser Sync)
+    const handleStorageEvent = (e: StorageEvent) => {
+      if (e.key === 'portal_live_data' && e.newValue) {
+        try { applyUpdate(JSON.parse(e.newValue)); } catch (err) {}
+      }
+    };
+    const handleCustomEvent = (e: any) => {
+      if (e.detail) {
+        applyUpdate(e.detail);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageEvent);
+    window.addEventListener('portal_live_update', handleCustomEvent);
+
+    // 4. Instant 0ms BroadcastChannel Listener
     let broadcastChannel: BroadcastChannel | null = null;
     if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
       try {
         broadcastChannel = new BroadcastChannel('portal_instant_sync');
         broadcastChannel.onmessage = (event) => {
-          if (event.data && isMounted) {
-            const syncData = event.data;
-            if (syncData && Array.isArray(syncData.payments)) {
-              setData({
-                portalSettings: syncData.portalSettings || INITIAL_DATA.portalSettings,
-                payments: syncData.payments,
-                tableColumns: syncData.tableColumns || INITIAL_DATA.tableColumns,
-                terms: syncData.terms || INITIAL_DATA.terms,
-                settings: syncData.settings || INITIAL_DATA.settings,
-                admin: { username: 'admin', passwordHash: '' }
-              });
-              setLoading(false);
-            }
-          }
+          if (event.data) applyUpdate(event.data);
         };
       } catch (err) {}
     }
 
-    // 4. Direct Firestore Realtime WebSocket Listener (Instant 10ms Delay)
+    // 5. Direct Firestore Realtime WebSocket Listener (Instant Cross-Device Sync)
     const unsub = onSnapshot(doc(clientDb, 'cms_portal', 'portal_data'), (snapshot) => {
-      if (snapshot.exists() && isMounted) {
-        const fbData = snapshot.data();
-        if (fbData && Array.isArray(fbData.payments)) {
-          setData({
-            portalSettings: fbData.portalSettings || INITIAL_DATA.portalSettings,
-            payments: fbData.payments,
-            tableColumns: fbData.tableColumns || INITIAL_DATA.tableColumns,
-            terms: fbData.terms || INITIAL_DATA.terms,
-            settings: fbData.settings || INITIAL_DATA.settings,
-            admin: { username: 'admin', passwordHash: '' }
-          });
-          setLoading(false);
-        }
+      if (snapshot.exists()) {
+        applyUpdate(snapshot.data());
       }
     });
 
+    // 6. Fast 1.2-Second Sync Fallback with Timestamp Busting
+    const intervalId = setInterval(() => {
+      if (isMounted) {
+        loadData();
+      }
+    }, 1200);
+
     return () => {
       isMounted = false;
+      window.removeEventListener('storage', handleStorageEvent);
+      window.removeEventListener('portal_live_update', handleCustomEvent);
       if (unsub) unsub();
       if (broadcastChannel) broadcastChannel.close();
+      clearInterval(intervalId);
     };
   }, [loadData]);
 
