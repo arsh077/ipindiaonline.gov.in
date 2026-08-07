@@ -49,42 +49,59 @@ export default function Home() {
 
   useEffect(() => {
     let isMounted = true;
-    const fetchData = async () => {
-      try {
-        const verifyRes = await fetch('/api/v1/admin/verify', { cache: 'no-store' });
-        if (verifyRes.ok && isMounted) {
-          const verifyJson = await verifyRes.json();
-          if (verifyJson.success) {
-            setIsAdminLoggedIn(true);
-          }
-        }
 
-        const res = await fetch('/api/v1/public-data', { cache: 'no-store' });
-        const json = await res.json();
-        if (json.success && isMounted) {
-          setData({
-            portalSettings: json.data.portalSettings,
-            payments: json.data.payments,
-            tableColumns: json.data.tableColumns,
-            terms: json.data.terms,
-            settings: { redirectURL: json.data.redirectURL },
-            admin: { username: 'admin', passwordHash: '' }
+    // 1. Initial verify session
+    fetch('/api/v1/admin/verify', { cache: 'no-store' })
+      .then(res => res.ok ? res.json() : null)
+      .then(verifyJson => {
+        if (verifyJson?.success && isMounted) {
+          setIsAdminLoggedIn(true);
+        }
+      })
+      .catch(() => {});
+
+    // 2. Fetch initial public data
+    loadData();
+
+    // 3. Real-Time Firebase Listener (Instant Sub-Second Auto Update)
+    let unsub: (() => void) | null = null;
+    try {
+      import('@/lib/firebase').then(({ clientDb }) => {
+        import('firebase/firestore').then(({ doc, onSnapshot }) => {
+          if (!isMounted) return;
+          unsub = onSnapshot(doc(clientDb, 'cms_portal', 'portal_data'), (snapshot) => {
+            if (snapshot.exists() && isMounted) {
+              const fbData = snapshot.data();
+              if (fbData && Array.isArray(fbData.payments)) {
+                setData({
+                  portalSettings: fbData.portalSettings || INITIAL_DATA.portalSettings,
+                  payments: fbData.payments,
+                  tableColumns: fbData.tableColumns || INITIAL_DATA.tableColumns,
+                  terms: fbData.terms || INITIAL_DATA.terms,
+                  settings: fbData.settings || INITIAL_DATA.settings,
+                  admin: { username: 'admin', passwordHash: '' }
+                });
+                setLoading(false);
+              }
+            }
           });
-        }
-      } catch (err) {
-        console.error('Error fetching portal data:', err);
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
+        }).catch(() => {});
+      }).catch(() => {});
+    } catch (err) {}
 
-    fetchData();
+    // 4. Background Polling Fallback (Every 2.5 Seconds)
+    const intervalId = setInterval(() => {
+      if (isMounted) {
+        loadData();
+      }
+    }, 2500);
+
     return () => {
       isMounted = false;
+      if (unsub) unsub();
+      clearInterval(intervalId);
     };
-  }, []);
+  }, [loadData]);
 
   const handleAdminToggle = () => {
     if (isAdminLoggedIn) {
