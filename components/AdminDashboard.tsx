@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 
 import { doc, setDoc } from 'firebase/firestore';
-import { clientDb } from '@/lib/firebase';
+import { clientDb } from '@/lib/firebase-client';
 
 const DEFAULT_COLS: TableColumn[] = [
   { id: 'col-sno', key: 'sNo', label: 'S. No.', visible: true },

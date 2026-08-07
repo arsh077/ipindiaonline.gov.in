@@ -7,7 +7,7 @@ import AdminLogin from '@/components/AdminLogin';
 import { INITIAL_DATA } from '@/lib/initial-data';
 import { FullPortalData } from '@/lib/types';
 import { doc, onSnapshot } from 'firebase/firestore';
-import { clientDb } from '@/lib/firebase';
+import { clientDb } from '@/lib/firebase-client';
 
 export default function Home() {
   const [data, setData] = useState<FullPortalData>(INITIAL_DATA);
