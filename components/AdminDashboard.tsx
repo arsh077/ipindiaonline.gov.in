@@ -18,6 +18,41 @@ const DEFAULT_COLS: TableColumn[] = [
   { id: 'col-price', key: 'price', label: 'Price', visible: true }
 ];
 
+const NOTICE_TEMPLATES = [
+  {
+    id: 'template1',
+    label: '1st Dropdown: Logo Evidence & Similarity Risk Assessment (Class 35)',
+    defaultBrand: 'SHRAM SARATHI NETWORK',
+    defaultClass: '35',
+    generate: (brand: string, classNum: string) =>
+      `This is to inform that we intend to file a trademark application in Class ${classNum || '35'} for the brand name “${brand || 'SHRAM SARATHI NETWORK'}”, declared to be a common name and true and correct to the best of our knowledge. We are required to submit the logo evidence (copyright) for the same. A preliminary similarity and risk assessment has been requested to identify any identical or deceptively similar trademarks already applied for or registered under the said class. If any conflicting or prior applications/registrations are found, the same may affect the registrability and acceptance of the proposed mark.`
+  },
+  {
+    id: 'template2',
+    label: '2nd Dropdown: TM-C Verification & Nominal Fee (Class 38)',
+    defaultBrand: 'TRUSTFIX',
+    defaultClass: '38',
+    generate: (brand: string, classNum: string) =>
+      `This is to inform that we intend to file a trademark application in Class ${classNum || '38'} for the brand name “${brand || 'TRUSTFIX'}”, declared to be a unique name and true and correct to the best of our knowledge.
+
+Now the applicant needs to clear the TM-C verification to obtain the Acceptance Letter and Authorization Letter for the same, in order to proceed with the remaining trademark filing formalities.
+
+For this purpose, the required Government nominal fee needs to be submitted through the registered Attorney Code as per the prescribed procedure.
+
+A preliminary similarity and risk assessment has been requested under the said class to identify any identical or deceptively similar trademarks that may already be applied for or registered.`
+  },
+  {
+    id: 'template3',
+    label: '3rd Dropdown: Final Stage Court Process Verification (Thakur & Sons)',
+    defaultBrand: 'THAKUR AND SONS PRIVATE LIMITED A Heritage of Purity, A Commitment to Quality',
+    defaultClass: '35',
+    generate: (brand: string, classNum: string) =>
+      `We are pleased to inform you that the trademark application for “${brand || 'THAKUR AND SONS PRIVATE LIMITED A Heritage of Purity, A Commitment to Quality'}”${classNum ? ` in Class ${classNum}` : ''} has now reached its final stage of processing, i.e., the Court Process.
+
+At this stage, the assigned attorney will be physically present before the concerned court/authority on behalf of the applicant to complete the required formalities and verification process (Judge verification, Documents Verification, Attorney verification). For that, the court approval amount needs to be submitted through the assigned attorney code.`
+  }
+];
+
 interface AdminDashboardProps {
   initialData: FullPortalData;
   onLogout: () => void;
@@ -105,6 +140,9 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
   );
   const [newColLabel, setNewColLabel] = useState<string>('');
   const [termsList, setTermsList] = useState<TermSection[]>([...initialData.terms]);
+  const [termTemplates, setTermTemplates] = useState<Record<string, { templateId: string; brandName: string; classNumber: string }>>({
+    'term-2': { templateId: 'template1', brandName: 'SHRAM SARATHI NETWORK', classNumber: '35' }
+  });
   const [redirectURL, setRedirectURL] = useState<string>(initialData.settings.redirectURL);
 
   const getFullDataSnapshot = (overridePayments?: PaymentItem[], overrideHeader?: PortalSettings, overrideTerms?: TermSection[]): FullPortalData => {
@@ -445,6 +483,46 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
       copy[index] = { ...copy[index], [field]: value };
       return copy;
     });
+  };
+
+  const handleApplyNoticeTemplate = (index: number, termId: string, templateId: string) => {
+    if (!templateId) {
+      setTermTemplates(prev => {
+        const copy = { ...prev };
+        delete copy[termId];
+        return copy;
+      });
+      return;
+    }
+    const tmpl = NOTICE_TEMPLATES.find(t => t.id === templateId);
+    if (!tmpl) return;
+
+    const brandName = tmpl.defaultBrand;
+    const classNumber = tmpl.defaultClass;
+
+    setTermTemplates(prev => ({
+      ...prev,
+      [termId]: { templateId, brandName, classNumber }
+    }));
+
+    const generatedText = tmpl.generate(brandName, classNumber);
+    handleUpdateTerm(index, 'description', generatedText);
+  };
+
+  const handleUpdateTemplateVars = (index: number, termId: string, field: 'brandName' | 'classNumber', value: string) => {
+    const current = termTemplates[termId] || { templateId: 'template1', brandName: '', classNumber: '' };
+    const updatedVars = { ...current, [field]: value };
+
+    setTermTemplates(prev => ({
+      ...prev,
+      [termId]: updatedVars
+    }));
+
+    const tmpl = NOTICE_TEMPLATES.find(t => t.id === updatedVars.templateId);
+    if (tmpl) {
+      const generatedText = tmpl.generate(updatedVars.brandName, updatedVars.classNumber);
+      handleUpdateTerm(index, 'description', generatedText);
+    }
   };
 
   const handleAddTerm = () => {
@@ -1141,6 +1219,59 @@ export default function AdminDashboard({ initialData, onLogout, onBackToPublic, 
                       className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm font-semibold text-slate-100 focus:outline-none focus:border-cyan-500"
                       placeholder="Section Title..."
                     />
+
+                    {/* NOTICE PRESET TEMPLATES DROPDOWN & EDITABLE BOXES */}
+                    <div className="bg-slate-950 p-3.5 rounded-lg border border-cyan-900/50 space-y-3">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                        <label className="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
+                          <FileText className="w-3.5 h-3.5 text-cyan-400" />
+                          Notice Template Dropdown:
+                        </label>
+                        <select
+                          value={termTemplates[term.id]?.templateId || ''}
+                          onChange={(e) => handleApplyNoticeTemplate(index, term.id, e.target.value)}
+                          className="w-full sm:w-auto bg-slate-900 border border-cyan-700/60 rounded-lg px-3 py-1.5 text-xs text-cyan-200 font-semibold focus:outline-none focus:border-cyan-400 cursor-pointer shadow-sm"
+                        >
+                          <option value="">-- Select Notice Dropdown Template --</option>
+                          {NOTICE_TEMPLATES.map((tmpl) => (
+                            <option key={tmpl.id} value={tmpl.id}>
+                              {tmpl.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Brand Name & Class editable input boxes */}
+                      {termTemplates[term.id]?.templateId && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2.5 border-t border-slate-800">
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                              ✏️ Edit Brand Name Box:
+                            </label>
+                            <input
+                              type="text"
+                              value={termTemplates[term.id]?.brandName || ''}
+                              onChange={(e) => handleUpdateTemplateVars(index, term.id, 'brandName', e.target.value)}
+                              placeholder="Enter Brand Name..."
+                              className="w-full bg-slate-900 border border-slate-700 rounded-md px-2.5 py-1.5 text-xs text-white font-medium focus:outline-none focus:border-cyan-500"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                              ✏️ Edit Class Box:
+                            </label>
+                            <input
+                              type="text"
+                              value={termTemplates[term.id]?.classNumber || ''}
+                              onChange={(e) => handleUpdateTemplateVars(index, term.id, 'classNumber', e.target.value)}
+                              placeholder="Enter Class (e.g. 35)..."
+                              className="w-full bg-slate-900 border border-slate-700 rounded-md px-2.5 py-1.5 text-xs text-white font-medium focus:outline-none focus:border-cyan-500"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
 
                     <textarea
                       rows={3}

@@ -44,7 +44,7 @@ export const INITIAL_DATA: FullPortalData = {
       id: "term-2",
       order: 2,
       title: "2. NOTICE",
-      description: "The necessary transaction charge plus service tax as applicable for online payment of the services will be borne by the user. The list of charges for using various payment gateway services is available on the NTRP Portal at website i.e. https://bharatkosh.gov.in/"
+      description: "This is to inform that we intend to file a trademark application in Class 35 for the brand name “SHRAM SARATHI NETWORK”, declared to be a common name and true and correct to the best of our knowledge. We are required to submit the logo evidence (copyright) for the same. A preliminary similarity and risk assessment has been requested to identify any identical or deceptively similar trademarks already applied for or registered under the said class. If any conflicting or prior applications/registrations are found, the same may affect the registrability and acceptance of the proposed mark."
     },
     {
       id: "term-3",
