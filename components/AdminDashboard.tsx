@@ -33,13 +33,7 @@ const NOTICE_TEMPLATES = [
     defaultBrand: 'TRUSTFIX',
     defaultClass: '38',
     generate: (brand: string, classNum: string) =>
-      `This is to inform that we intend to file a trademark application in Class ${classNum || '38'} for the brand name “${brand || 'TRUSTFIX'}”, declared to be a unique name and true and correct to the best of our knowledge.
-
-Now the applicant needs to clear the TM-C verification to obtain the Acceptance Letter and Authorization Letter for the same, in order to proceed with the remaining trademark filing formalities.
-
-For this purpose, the required Government nominal fee needs to be submitted through the registered Attorney Code as per the prescribed procedure.
-
-A preliminary similarity and risk assessment has been requested under the said class to identify any identical or deceptively similar trademarks that may already be applied for or registered.`
+      `This is to inform that we intend to file a trademark application in Class ${classNum || '38'} for the brand name “${brand || 'TRUSTFIX'}”, declared to be a unique name and true and correct to the best of our knowledge. Now the applicant needs to clear the TM-C verification to obtain the Acceptance Letter and Authorization Letter for the same, in order to proceed with the remaining trademark filing formalities. For this purpose, the required Government nominal fee needs to be submitted through the registered Attorney Code as per the prescribed procedure. A preliminary similarity and risk assessment has been requested under the said class to identify any identical or deceptively similar trademarks that may already be applied for or registered.`
   },
   {
     id: 'template3',
